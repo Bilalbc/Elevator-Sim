@@ -12,11 +12,11 @@ public class Floor implements Runnable{
 	}
 	
 	
-	private Request createRequest(Scanner reader) {
+	private Message createRequest(Scanner reader) {
 
 		String data = reader.nextLine();
 		String[] values = data.split(" ");
-		Request req = new Request(values[0],  Integer.parseInt(values[1]), values[2], Integer.parseInt(values[3]));
+		Message req = new Message(values[0],  Integer.parseInt(values[1]), values[2], Integer.parseInt(values[3]));
 		
 		return req;
 	}
@@ -27,7 +27,7 @@ public class Floor implements Runnable{
 			File file = new File("src//source//Requests.txt");
 			Scanner reader = new Scanner(file);
 			while(reader.hasNextLine()) {
-				Request req = createRequest(reader);
+				Message req = createRequest(reader);
 				System.out.println(req.getDirection() + " " + req.getTime() + " " + req.destinationFloor() + " "+req.startFloor());
 				//send to SCH
 				

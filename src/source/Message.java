@@ -1,12 +1,13 @@
 package source;
 
-public class Request {
+public class Message {
 	private String time;
 	private String direction;
 	private int startFloor;
 	private int destinationFloor;
+	private String returnMessage;
 	
-	public Request(String time, int startFloor, String direction, int destinationFloor) {
+	public Message(String time, int startFloor, String direction, int destinationFloor) {
 		this.time = time;
 		this.direction = direction;
 		this.startFloor = startFloor;
@@ -27,6 +28,14 @@ public class Request {
 	
 	public int destinationFloor() {
 		return this.destinationFloor;
+	}
+	
+	public void setReturnMessage(String message) {
+		this.returnMessage = message;
+	}
+	
+	public String getReturnMessage() {
+		return this.returnMessage;
 	}
 	
 	
