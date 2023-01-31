@@ -3,7 +3,7 @@
  * @Date: 2023-02-04
  * @Version 1.0
  * 
- * As for Iteration1 and Version 1.0, Scheduler class acts as a buffer to transfer a message of type Request between both Floor and 
+ * As for Iteration1 and Version 1.0, Scheduler class acts as a buffer to transfer a message of type Message between both Floor and 
  * Elevator. The scheduler only holds one item. 
  * 
  * */
@@ -14,22 +14,22 @@ import java.util.ArrayList;
 public class Scheduler {
 	
 	public static final int REPLY_BUFFER_SIZE = 1;
-	public static final int REQUEST_BUFFER_SIZE = 1;
+	public static final int Message_BUFFER_SIZE = 1;
 	public static final int BUFFER_EMPTY = 0;
 	
 	/*For now, these will have a maximum size of 1*/
-	private ArrayList<Request> requestQueue;
-	private ArrayList<Request> replyQueue;
+	private ArrayList<Message> MessageQueue;
+	private ArrayList<Message> replyQueue;
 	
 	public Scheduler()
 	{
-		this.requestQueue = new ArrayList<>();
+		this.MessageQueue = new ArrayList<>();
 		this.replyQueue = new ArrayList<>();
 	}
 	
-	public synchronized void passRequest(Request request)
+	public synchronized void passMessage(Message Message)
 	{
-		while ((this.requestQueue.size() == REQUEST_BUFFER_SIZE)) {
+		while ((this.MessageQueue.size() == Message_BUFFER_SIZE)) {
 			try {
 				wait();
 			} catch (InterruptedException e) {
@@ -37,16 +37,16 @@ public class Scheduler {
 			}
 		}
 		
-		this.requestQueue.add(request);
+		this.MessageQueue.add(Message);
 		
 		notifyAll();	
 	}
 	
-	public synchronized Request readRequest()
+	public synchronized Message readMessage()
 	{
-		Request request;
+		Message Message;
 		
-		while(this.requestQueue.size() != REQUEST_BUFFER_SIZE)
+		while(this.MessageQueue.size() != Message_BUFFER_SIZE)
 		{
 			try {
 				wait();
@@ -55,15 +55,15 @@ public class Scheduler {
 			}
 		}
 		
-		request = this.requestQueue.get(BUFFER_EMPTY);
-		this.requestQueue.clear();
+		Message = this.MessageQueue.get(BUFFER_EMPTY);
+		this.MessageQueue.clear();
 		
 		notifyAll();
 		
-		return request;
+		return Message;
 	}
 	
-	public synchronized void passReply(Request request)
+	public synchronized void passReply(Message Message)
 	{
 		while ((this.replyQueue.size() == REPLY_BUFFER_SIZE)) {
 			try {
@@ -73,14 +73,14 @@ public class Scheduler {
 			}
 		}
 		
-		this.replyQueue.add(request);
+		this.replyQueue.add(Message);
 		
 		notifyAll();	
 	}
 	
-	public synchronized Request readReply()
+	public synchronized Message readReply()
 	{
-		Request reply;
+		Message reply;
 		
 		while(this.replyQueue.size() != REPLY_BUFFER_SIZE)
 		{
