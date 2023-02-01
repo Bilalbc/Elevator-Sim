@@ -15,7 +15,7 @@ public class Floor implements Runnable{
 	private Message createRequest(Scanner reader) {
 
 		String data = reader.nextLine();
-		String[] values = data.split(" ");
+		String[] values = data.split(", ");
 		Message req = new Message(values[0],  Integer.parseInt(values[1]), values[2], Integer.parseInt(values[3]));
 		
 		return req;
@@ -24,7 +24,7 @@ public class Floor implements Runnable{
 	@Override
 	public void run() {
 		try {
-			File file = new File("src//source//Requests.txt");
+			File file = new File("src//source//Requests.csv");
 			Scanner reader = new Scanner(file);
 			while(reader.hasNextLine()) {
 				Message req = createRequest(reader);
