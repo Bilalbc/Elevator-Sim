@@ -1,6 +1,7 @@
 package source;
 
 public class Message {
+
 	private String time;
 	private String direction;
 	private int startFloor;
@@ -37,6 +38,5 @@ public class Message {
 	public String getReturnMessage() {
 		return this.returnMessage;
 	}
-	
 	
 }
