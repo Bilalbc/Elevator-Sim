@@ -1,10 +1,12 @@
 /*
  * @Author: Mohamed Kaddour
+
  * @Date: 2023-02-04
  * @Version 1.0
  * 
  * As for Iteration1 and Version 1.0, Scheduler class acts as a buffer to transfer a message of type Message between both Floor and 
- * Elevator. The scheduler only holds one item. 
+ * Elevator. The scheduler manages a queue that, for this iteration, will only hold up to 1 message. The message will then be passed
+ * along to either the Floor class or the Elevator depending on the method call. 
  * 
  * */
 package source;
@@ -14,22 +16,31 @@ import java.util.ArrayList;
 public class Scheduler {
 	
 	public static final int REPLY_BUFFER_SIZE = 1;
-	public static final int Message_BUFFER_SIZE = 1;
+	public static final int MESSAGE_BUFFER_SIZE = 1;
 	public static final int BUFFER_EMPTY = 0;
 	
 	/*For now, these will have a maximum size of 1*/
-	private ArrayList<Message> MessageQueue;
+	private ArrayList<Message> messageQueue;
 	private ArrayList<Message> replyQueue;
 	
+	/*
+	 * Constructor for class Scheduler. Initializes both the messageQueue and the replyQueue ArrayLists
+	 * **/
 	public Scheduler()
 	{
-		this.MessageQueue = new ArrayList<>();
+		this.messageQueue = new ArrayList<>();
 		this.replyQueue = new ArrayList<>();
 	}
 	
-	public synchronized void passMessage(Message Message)
+	/*
+	 * Synchronized method that takes in a message and, if the message queue is not full (size of 1), then it adds 
+	 * the message to the queue. 
+	 *
+	 *@param message of type Message to pass
+	 **/
+	public synchronized void passMessage(Message message)
 	{
-		while ((this.MessageQueue.size() == Message_BUFFER_SIZE)) {
+		while ((this.messageQueue.size() == MESSAGE_BUFFER_SIZE)) {
 			try {
 				wait();
 			} catch (InterruptedException e) {
@@ -37,16 +48,21 @@ public class Scheduler {
 			}
 		}
 		
-		this.MessageQueue.add(Message);
+		this.messageQueue.add(message);
 		
 		notifyAll();	
 	}
 	
+	/**
+	 * Synchronized method that returns a Message from the queue only if the queue is not empty, else it will wait. 
+	 * @param none
+	 * @return Message to be read
+	 * */
 	public synchronized Message readMessage()
 	{
-		Message Message;
+		Message message;
 		
-		while(this.MessageQueue.size() != Message_BUFFER_SIZE)
+		while(this.messageQueue.size() != MESSAGE_BUFFER_SIZE)
 		{
 			try {
 				wait();
@@ -55,15 +71,21 @@ public class Scheduler {
 			}
 		}
 		
-		Message = this.MessageQueue.get(BUFFER_EMPTY);
-		this.MessageQueue.clear();
+		message = this.messageQueue.get(BUFFER_EMPTY);
+		this.messageQueue.clear(); //Since there is only one item expected at all times, can just clear queue to empty it. 
 		
 		notifyAll();
 		
-		return Message;
+		return message;
 	}
-	
-	public synchronized void passReply(Message Message)
+
+	/*
+	 * Synchronized method that takes in a message and, if the reply queue is not full (size of 1), then it adds 
+	 * the message to the queue. 
+	 *
+	 *@param message of type Message to reply
+	 **/
+	public synchronized void passReply(Message reply)
 	{
 		while ((this.replyQueue.size() == REPLY_BUFFER_SIZE)) {
 			try {
@@ -73,11 +95,16 @@ public class Scheduler {
 			}
 		}
 		
-		this.replyQueue.add(Message);
+		this.replyQueue.add(reply);
 		
 		notifyAll();	
 	}
 	
+	/**
+	 * Synchronized method that returns a Message from the queue only if the queue is not empty, else it will wait. 
+	 * @param none
+	 * @return Message to reply
+	 * */
 	public synchronized Message readReply()
 	{
 		Message reply;
