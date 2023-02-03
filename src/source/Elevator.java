@@ -9,25 +9,25 @@ public class Elevator implements Runnable{
 	private Scheduler scheduler;
 	private ArrayList<Message> requestQueue;
 	
-	public Elevator(Scheduler sch, Message message, int num) {
+	public Elevator(Scheduler sch) {
 		this.scheduler = sch;
+		this.currentFloor = 1;
 		requestQueue = new ArrayList<>();
-		this.assignedNum = num;
+		this.assignedNum = 1; //only have 1 elevator right now
 	}
 	
-	private void moveFloor() {
-		System.out.println("Current Floor: " + currentFloor);
+	private synchronized void receiveRequest() {
+		requestQueue.add(scheduler.readMessage());
 		
-		if (requestQueue != null) {
-			
-		}
+		Message msg = requestQueue.get(0);
+		
+		System.out.println(msg.getDirection() + " " + msg.getTime() + " " + msg.destinationFloor() + " "+ msg.startFloor());
 	}
 	
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
-		
+		receiveRequest();
+		scheduler.passReply(requestQueue.get(0));
 	}
 	
-
 }
