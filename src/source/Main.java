@@ -7,9 +7,12 @@ public class Main {
 		
 		//THIS IS TO TEST FLOOR DELETE WHEN MERGING
 		Scheduler s = new Scheduler();
-		Floor f = new Floor(s);
 		
-		f.run();
+		Thread f = new Thread(new Floor(s), "Floor");
+		Thread e = new Thread(new Elevator(s), "Elevator");
+		
+		f.start();
+		e.start();
 	}
 
 }
