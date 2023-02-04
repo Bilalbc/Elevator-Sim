@@ -1,4 +1,4 @@
-/*
+/**
  * @Author: Mohamed Kaddour
 
  * @Date: 2023-02-04
@@ -8,7 +8,7 @@
  * Elevator. The scheduler manages a queue that, for this iteration, will only hold up to 1 message. The message will then be passed
  * along to either the Floor class or the Elevator depending on the method call. 
  * 
- * */
+ */
 package source;
 
 import java.util.ArrayList;
@@ -27,9 +27,9 @@ public class Scheduler {
 	private int messageRecieved;
 	private int repliesRecieved;
 	
-	/*
+	/**
 	 * Constructor for class Scheduler. Initializes both the messageQueue and the replyQueue ArrayLists
-	 * **/
+	 */
 	public Scheduler()
 	{
 		this.messageQueue = new ArrayList<>();
@@ -38,12 +38,12 @@ public class Scheduler {
 		this.repliesRecieved = 0;
 	}
 	
-	/*
+	/**
 	 * Synchronized method that takes in a message and, if the message queue is not full (size of 1), then it adds 
 	 * the message to the queue. 
 	 *
 	 *@param message of type Message to pass
-	 **/
+	 */
 	public synchronized void passMessage(Message message)
 	{
 		while ((this.messageQueue.size() == MESSAGE_BUFFER_SIZE)) {
@@ -64,7 +64,7 @@ public class Scheduler {
 	 * Synchronized method that returns a Message from the queue only if the queue is not empty, else it will wait. 
 	 * @param none
 	 * @return Message to be read
-	 * */
+	 */
 	public synchronized Message readMessage()
 	{
 		Message message;
@@ -86,12 +86,12 @@ public class Scheduler {
 		return message;
 	}
 
-	/*
+	/**
 	 * Synchronized method that takes in a message and, if the reply queue is not full (size of 1), then it adds 
 	 * the message to the queue. 
 	 *
 	 *@param message of type Message to reply
-	 **/
+	 */
 	public synchronized void passReply(Message reply)
 	{
 		while ((this.replyQueue.size() == REPLY_BUFFER_SIZE)) {
@@ -133,19 +133,35 @@ public class Scheduler {
 		
 		return reply;
 	}
+	
+	/**
+	 * Getter to see if the scheduler is closed.
+	 * @return closed, boolean
+	 */
 
 	public boolean isClosed() {
 		return closed;
 	}
-
+	
+	/**
+	 * Sets the scheduler to closed
+	 */
 	public void setClosed() {
 		this.closed = true;
 	}
 	
+	/**
+	 * Getter for the messages the scheduler has gotten from the floor
+	 * @return messageRecieved, int
+	 */
 	public int getMessagesRecieved() {
 		return this.messageRecieved;
 	}
 	
+	/**
+	 * Getter for the replies the scheduler has gotten from the elevator
+	 * @return repliesRecieved, int
+	 */
 	public int getRepliesRecieved() {
 		return this.repliesRecieved;
 	}
