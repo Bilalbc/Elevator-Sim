@@ -8,7 +8,7 @@ import java.util.Scanner;
  * 
  * @author Kousha Motazedian, Matthew Parker
  * @version 1.0
- * @date Febuary 4th, 2023
+ * @date February 4th, 2023
  */
 public class Floor implements Runnable{
 	private Scheduler scheduler;

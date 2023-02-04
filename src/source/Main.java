@@ -1,6 +1,16 @@
 package source;
 
+/**
+ * Main Class that has the main method to run the program.
+ * @version 1.0
+ *
+ */
 public class Main {
+	
+	/**
+	 * The main method
+	 * @param args, String[]
+	 */
 	
 	public static void main (String[] args)
 	{		
