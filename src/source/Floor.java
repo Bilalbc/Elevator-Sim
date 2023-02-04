@@ -11,7 +11,7 @@ import java.util.Scanner;
  * @date Febuary 4th, 2023
  */
 public class Floor implements Runnable{
-	Scheduler scheduler;
+	private Scheduler scheduler;
 	
 	/**
 	 * Constructor for Floor class
@@ -48,13 +48,16 @@ public class Floor implements Runnable{
 			Scanner reader = new Scanner(file);
 			while(reader.hasNextLine()) {
 				Message req = createRequest(reader);
-				System.out.println(req.getDirection() + " " + req.getTime() + " " + req.destinationFloor() + " "+req.startFloor());
+				System.out.println("Passing message: " + req);
 				scheduler.passMessage(req);
-				System.out.println(scheduler.readReply());
+				System.out.println("Reading reply: " + scheduler.readReply().getReturnMessage());
 				
+				Thread.sleep(500);
 			}
+			
+			scheduler.setClosed();
 			reader.close();
-		} catch (FileNotFoundException e) {}
+		} catch (FileNotFoundException | InterruptedException e) {}
 	}
 	
 }
