@@ -22,3 +22,13 @@
 ## How to run
 To run the code, make sure that all files are present and are in the right spots. The code overview above tells you which classes should be where. (Requests.csv) should be in the source package. Run Main.java to start the program, as it contains the main method.
 
+## Contributions
+Everyone contributed to the design and planning of the program.
+
+**Sequence Diagram:** Mohamed Kaddour
+**Scheduler.java:** Mohamed Kaddour
+**Class Diagram:** Bilal Chaudhry
+**JUnit Testing:** Bilal Chaudhry
+**Message.java:** Kousha Motazedian
+**Floor.java:** Kousha Motazedian, Matthew Parker
+**Elevator.java:** Akshay Vashisht
