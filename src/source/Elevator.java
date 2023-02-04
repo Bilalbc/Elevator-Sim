@@ -21,7 +21,7 @@ public class Elevator implements Runnable{
 
         Message msg = requestQueue.get(0);
 
-        System.out.println(msg.getDirection() + " " + msg.getTime() + " " + msg.destinationFloor() + " "+ msg.startFloor());
+        System.out.println(msg);
     }
 
     @Override
