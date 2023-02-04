@@ -16,18 +16,23 @@ public class Elevator implements Runnable{
         this.assignedNum = 1; //only have 1 elevator right now
     }
 
-    private synchronized void receiveRequest() {
-        requestQueue.add(scheduler.readMessage());
-
-        Message msg = requestQueue.get(0);
-
-        System.out.println(msg);
-    }
-
     @Override
     public void run() {
-        receiveRequest();
-        scheduler.passReply(requestQueue.get(0));
+    	while (!scheduler.isClosed()) {
+    		Message req = scheduler.readMessage();
+            System.out.println("Recieved message: " + req);
+    		
+    		//receiveRequest();
+            System.out.println("Passing reply: " + req);
+            req.setReturnMessage("Arrived at Destination Floor - Request was: " + req);
+    		scheduler.passReply(req); 
+    		
+    		try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+    	}
     }
 
 }

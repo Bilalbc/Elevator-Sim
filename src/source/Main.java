@@ -3,9 +3,7 @@ package source;
 public class Main {
 	
 	public static void main (String[] args)
-	{
-		
-		//THIS IS TO TEST FLOOR DELETE WHEN MERGING
+	{		
 		Scheduler s = new Scheduler();
 		
 		Thread f = new Thread(new Floor(s), "Floor");

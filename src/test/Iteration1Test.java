@@ -1,11 +1,9 @@
 package test;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.PrintStream;
 import java.util.Scanner;
 
 import org.junit.Before;
@@ -23,93 +21,85 @@ import source.Scheduler;
  * @Version 1.0
  *
  *
- * Test class for 
+ *  Test class for Iteration 1
  */
 
 public class Iteration1Test {
 
 	private File testData;
-	private Scheduler s;
-	
+
 	@Before
 	public void setUp() {
-		
 		this.testData = new File("src//source//Requests.csv");
-		
-		s = new Scheduler();
-		System.out.println("asd");
-		
 	}
-	
-	@Test 
-	public void testSendAndRecieveResponse() {
+
+	@Test
+	public void testPassAndRecieveRequest() {
+		Scheduler s = new Scheduler();
+		Thread f = new Thread(new Floor(s), "Floor");
+		Thread e = new Thread(new Elevator(s), "Elevator");
+
+		f.start();
+		e.start();
+
+		while (f.isAlive() || e.isAlive()) {
+			// Busy waiting
+		}
+
+		assertTrue(s.getMessagesRecieved() == 2);
+		assertTrue(s.getRepliesRecieved() == 2);
+
+		s.setClosed();
+	}
+
+	@Test
+	public void testPassMessage() {
 		Message expectedRequest;
-		
+		Scheduler s = new Scheduler();
+
 		try {
 			Scanner scanner = new Scanner(testData);
 
-			Thread f = new Thread(new Floor(s), "Floor");
-			Thread e = new Thread(new Elevator(s), "Elevator");
-			
-			f.start();
-			e.start();
-						
-			expectedRequest = createRequest(scanner.nextLine());	
-			
-
+			while (scanner.hasNext()) {
+				expectedRequest = createRequest(scanner.nextLine());
+				s.passMessage(expectedRequest);
+				assertTrue(s.readMessage().equals(expectedRequest));
+			}
+			scanner.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
 	}
 
-	@Test public void testPassRequest() {
-	
-		Message expectedRequest;
-		
-		try { 
-			Scanner scanner = new Scanner(testData); Thread f = new Thread(new
-			
-			Floor(s), "Floor");
-			
-			f.start();
-			
-			expectedRequest = createRequest(scanner.nextLine());
-			assertTrue(s.readMessage().equals(expectedRequest));
-			
-			scanner.close();
-			
-		} catch (FileNotFoundException e) { 
-			e.printStackTrace(); 
-			}
-		}
-	
-	@Test public void testPassReply() {
-	
+	@Test
+	public void testPassReply() {
 		Message expectedResponse;
-		
-		try { 
+		Scheduler s = new Scheduler();
+
+		try {
 			Scanner scanner = new Scanner(testData);
-			
-			Thread f = new Thread(new Floor(s), "Floor"); Thread e = new Thread(new
-			Elevator(s), "Elevator");
-			
-			f.start(); e.start();
-			
-			expectedResponse = createRequest(scanner.nextLine());
-			assertTrue(s.readReply().equals(expectedResponse));
-			
+
+			Thread e = new Thread(new Elevator(s), "Elevator");
+			e.start();
+
+			while (scanner.hasNext()) {
+				expectedResponse = createRequest(scanner.nextLine());
+				s.passMessage(expectedResponse);
+				assertTrue(s.readReply().equals(expectedResponse));
+			}
 			scanner.close();
-		
-		} catch (FileNotFoundException e) { 
-			e.printStackTrace(); 
+			s.setClosed();
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
 		}
-		
+
 	}
-	
+
 	private Message createRequest(String request) {
 		String[] values = request.split(", ");
-		Message req = new Message(values[0],  Integer.parseInt(values[1]), values[2], Integer.parseInt(values[3]));
-		
+		Message req = new Message(values[0], Integer.parseInt(values[1]), values[2], Integer.parseInt(values[3]));
+
 		return req;
 	}
 }

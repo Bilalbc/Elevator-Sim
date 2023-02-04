@@ -23,6 +23,10 @@ public class Scheduler {
 	private ArrayList<Message> messageQueue;
 	private ArrayList<Message> replyQueue;
 	
+	private boolean closed = false;
+	private int messageRecieved;
+	private int repliesRecieved;
+	
 	/*
 	 * Constructor for class Scheduler. Initializes both the messageQueue and the replyQueue ArrayLists
 	 * **/
@@ -30,6 +34,8 @@ public class Scheduler {
 	{
 		this.messageQueue = new ArrayList<>();
 		this.replyQueue = new ArrayList<>();
+		this.messageRecieved = 0;
+		this.repliesRecieved = 0;
 	}
 	
 	/*
@@ -49,6 +55,7 @@ public class Scheduler {
 		}
 		
 		this.messageQueue.add(message);
+		this.messageRecieved++;
 		
 		notifyAll();	
 	}
@@ -96,6 +103,7 @@ public class Scheduler {
 		}
 		
 		this.replyQueue.add(reply);
+		this.repliesRecieved++;
 		
 		notifyAll();	
 	}
@@ -125,6 +133,20 @@ public class Scheduler {
 		
 		return reply;
 	}
+
+	public boolean isClosed() {
+		return closed;
+	}
+
+	public void setClosed() {
+		this.closed = true;
+	}
 	
+	public int getMessagesRecieved() {
+		return this.messageRecieved;
+	}
 	
+	public int getRepliesRecieved() {
+		return this.repliesRecieved;
+	}
 }
