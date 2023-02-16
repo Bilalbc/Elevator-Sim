@@ -1,7 +1,7 @@
 /**
  * @Author: Mohamed Kaddour
 
- * @Date: 2023-02-04
+ * @Date: 2023-02-16
  * @Version 2.0
  * 
  * As for Iteration1 and Version 1.0, Scheduler class acts as a buffer to transfer a message of type Message between both Floor and 
@@ -26,6 +26,8 @@ public class Scheduler {
 	private boolean closed = false;
 	private int messageRecieved;
 	private int repliesRecieved;
+	
+	private enum schedulerStates {RECEIVING, FAILURE, SENDING};
 	
 	/**
 	 * Constructor for class Scheduler. Initializes both the messageQueue and the replyQueue ArrayLists
