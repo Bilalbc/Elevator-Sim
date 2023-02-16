@@ -2,7 +2,7 @@ package source;
 
 /** 
  * @author Bilal Chaudhry
- * @version 1.0
+ * @version 2.0
  * 
  * Main Class that has the main method to run the program.
  *

@@ -7,8 +7,8 @@ import java.util.Scanner;
  * Floor object which reads instructions from file and passes it to the elevator scheduler
  * 
  * @author Kousha Motazedian, Matthew Parker
- * @version 2.0
- * @date February 4th, 2023
+ * @version 1.0
+ * @date Febuary 4th, 2023
  */
 public class Floor implements Runnable{
 	private Scheduler scheduler;
