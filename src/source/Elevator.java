@@ -2,11 +2,12 @@ package source;
 
 import java.util.ArrayList;
 /**
- * An Elevator class that takes requests from the scheduler and passes gives a reply back for the Floor.
  * @author Akshay V., Kousha Motazedian, Matthew Parker
  * @version 2.0
- * @date February 5th, 2023
+ * @date February 27th, 2023
  *
+ * An Elevator class that receives floor requests from the scheduler which indicates the order in which the elevator should pick up/drop off
+ * riders. As of Iteration2, the elevator follows the states of being able to move up, move down, stop, close doors and open doors.
  */
 
 public class Elevator implements Runnable{
@@ -32,7 +33,8 @@ public class Elevator implements Runnable{
     @Override
     /**
      * Run method of the elevator.
-     * Gets the request from the scheduler and prints it out. It creates a reply and gives it back to the scheduler.
+     * Gets the floor request from the scheduler for this specific elevator. The elevator is initially in the stopped state and will 
+     * query its floor queue through a call to the Scheduler in order to determine when it should stop to drop off/pick up people. 
      */
     public void run() {
     	while (!scheduler.isClosed()) {

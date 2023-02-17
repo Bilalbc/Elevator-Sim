@@ -8,7 +8,7 @@ import java.util.Scanner;
  * 
  * @author Kousha Motazedian, Matthew Parker
  * @version 2.0
- * @date February 4th, 2023
+ * @date February 27th, 2023
  */
 public class Floor implements Runnable{
 	private Scheduler scheduler;
@@ -63,9 +63,5 @@ public class Floor implements Runnable{
 		} catch (FileNotFoundException | InterruptedException e) {
 			System.out.println("filenotfound");
 		}
-	
-		
 	}
-	
-	
 }

@@ -1,13 +1,13 @@
 /**
  * @Author: Mohamed Kaddour
 
- * @Date: 2023-02-16
+ * @Date: 2023-02-27
  * @Version 2.0
  * 
- * As for Iteration1 and Version 1.0, Scheduler class acts as a buffer to transfer a message of type Message between both Floor and 
- * Elevator. The scheduler manages a queue that, for this iteration, will only hold up to 1 message. The message will then be passed
- * along to either the Floor class or the Elevator depending on the method call. 
- * 
+ * As for Iteration2 and Version 2.0, Scheduler class acts as a sorter for the floors based off the requests received from the floor subsystem. 
+ * Once a message is received, it is added to the queue. It then adds the destination to the queue of a specific elevator thread. 
+ * The scheduler also manages whether it would be efficient for a specific elevator (based on its number and current state) to take a certain 
+ * request.
  */
 package source;
 
@@ -38,7 +38,7 @@ public class Scheduler {
 	
 	
 	/**
-	 * Constructor for class Scheduler. Initializes both the messageQueue and the replyQueue ArrayLists
+	 * Constructor for class Scheduler. Initializes messageQueue, replyQueue and the elevatorQueue for Elevator 1. 
 	 */
 	public Scheduler()
 	{
@@ -53,22 +53,21 @@ public class Scheduler {
 	}
 	
 	/**
-	 * Synchronized method that takes in a message and, if the message queue is not full (size of 1), then it adds 
-	 * the message to the queue. 
+	 * Synchronized method that takes in a message and, if the scheduler is not in a waiting state, adds the message to the queue. 
+	 * As of Iteration2, it is assumed there is no maximum capacity to the messageQueue. 
 	 *
 	 *@param message of type Message to pass
 	 */
 	public synchronized void passMessage(Message message)
 	{
-
-		
 		while (states != SchedulerStates.WAITING) { //If the scheduler is not in the WAITING state, thread must wait until it is
 			try {
 				wait();
 			} catch (InterruptedException e) {
 				System.err.println(e);
 			}
-		} 
+		}
+		
 		this.states = SchedulerStates.RECEIVING; //Set to RECEIVING information
 		
 		this.messageQueue.add(message); //add the message to the message queue
@@ -80,9 +79,10 @@ public class Scheduler {
 	}
 	
 	/**
-	 * Synchronized method that returns a Message from the queue only if the queue is not empty, else it will wait. 
+	 * Synchronized method that returns a floor number to be the destination of the Elevator only in the case where that Elevator's queue is 
+	 * not empty. If the queue is not empty then return and then remove the first item in the floor queue. 
 	 * @param none
-	 * @return Message to be read
+	 * @return Floor to be read. 
 	 */
 	public synchronized int readMessage()
 	{
@@ -101,12 +101,12 @@ public class Scheduler {
 			this.states = SchedulerStates.WAITING; //Back to WAITING
 			return 0; 
 		}
+		
 		int reply = this.elevatorQueue.get(ELEVATOR1).get(0); //Get the next destination and give it to the elevator
 		this.elevatorQueue.get(ELEVATOR1).remove(0); //Remove the destination
 		
 		this.states = SchedulerStates.WAITING; // back to WAITING
 		notifyAll();
-		
 		
 		this.states = SchedulerStates.WAITING;
 		
@@ -114,10 +114,15 @@ public class Scheduler {
 	}
 
 	/**
-	 * Synchronized method that takes in a message and, if the reply queue is not full (size of 1), then it adds 
-	 * the message to the queue. 
+	 * Synchronized method that takes in the state of the Elevator and depending on the current state and the current floor of the elevator, 
+	 * will determine whether the request's floor can be added to the elevator queue to maximize efficiency. As of Iteration2 there is only one 
+	 * elevator but elevatorNum will be used to manage multiple. 
 	 *
-	 *@param message of type Message to reply
+	 * Forms a reply to be sent to the Floor class. 
+	 * 
+	 *@param currentFloor int of the calling Elevator thread
+	 *@param elevatorState the current state of the elevator of type Elevator.ElevatorStates 
+	 *@param elevatorNum, the elevator number.  
 	 */
 	public synchronized void passState(int currentFloor, Elevator.ElevatorStates elevatorState, int elevatorNum)
 	{
@@ -156,9 +161,6 @@ public class Scheduler {
 		//Add the return message of the elevator (current floor, state, and elevator number) for the floor to read
 		Message reply = new Message("Elevator " + elevatorNum + ": is on floor " + currentFloor + " and is " + elevatorState);
 		this.replyQueue.add(reply);
-		states = SchedulerStates.WAITING; //Back to WAITING
-		
-		this.states = SchedulerStates.WAITING;
 		
 		this.states = SchedulerStates.WAITING;
 		
@@ -166,7 +168,9 @@ public class Scheduler {
 	}
 	
 	/**
-	 * Synchronized method that returns a Message from the queue only if the queue is not empty, else it will wait. 
+	 * Synchronized method that returns a Message from the queue only if the queue is not empty, else it will wait. The reply contains 
+	 * information on the current floor of the elevator. 
+	 *  
 	 * @param none
 	 * @return Message to reply
 	 * */
@@ -228,6 +232,10 @@ public class Scheduler {
 		return this.repliesRecieved;
 	}
 	
+	/**
+	 * 
+	 * Getter method that returns the current state of the Scheduler. 
+	 * */
 	public Scheduler.SchedulerStates getSchedulerState()
 	{
 		return this.states;

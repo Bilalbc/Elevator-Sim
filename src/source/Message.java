@@ -3,7 +3,7 @@ package source;
  * The message class stores information about requests inside to be sent between the floor and elevator.
  * @author Kousha Motazedian
  * @version 2.0
- * @date February 3rd, 2023
+ * @date February 27th, 2023
  *
  */
 public class Message {
