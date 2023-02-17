@@ -60,7 +60,9 @@ public class Floor implements Runnable{
 			
 			reader.close();
 			System.exit(0);
-		} catch (FileNotFoundException | InterruptedException e) {}
+		} catch (FileNotFoundException | InterruptedException e) {
+			System.out.println("filenotfound");
+		}
 	
 		
 	}

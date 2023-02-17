@@ -48,7 +48,7 @@ public class Scheduler {
 		this.repliesRecieved = 0;
 		this.elevatorQueue = new HashMap<>();
 		this.elevatorQueue.put(ELEVATOR1, new ArrayList<Integer>());
-		
+
 		this.states = SchedulerStates.WAITING;
 	}
 	
@@ -101,12 +101,13 @@ public class Scheduler {
 		
 		notifyAll();
 		
-		this.states = SchedulerStates.WAITING;
 		if(elevatorQueue.get(ELEVATOR1).size() == 0) {
 			return 0;
 		}
 		int reply = this.elevatorQueue.get(ELEVATOR1).get(0);
 		this.elevatorQueue.get(ELEVATOR1).remove(0);
+		
+		this.states = SchedulerStates.WAITING;
 		
 		return reply;
 	}
@@ -127,6 +128,9 @@ public class Scheduler {
 		//		System.err.println(e);
 		//	}
 		//}
+		
+		this.states = SchedulerStates.RECEIVING;
+
 		if(messageQueue.size() != 0) {
 			int startFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).startFloor();
 			int destFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).destinationFloor();
@@ -150,6 +154,8 @@ public class Scheduler {
 		
 		this.replyQueue.add(currentFloor);
 		
+		this.states = SchedulerStates.WAITING;
+		
 		notifyAll();	
 	}
 	
@@ -160,7 +166,9 @@ public class Scheduler {
 	 * */
 	public synchronized Integer readReply()
 	{
-		while ((replyQueue.size() == 0)) {
+		this.states = SchedulerStates.SENDING;
+
+		while ((replyQueue.size() == BUFFER_EMPTY)) {
 			try {
 				wait();
 			} catch (InterruptedException e) {
@@ -174,6 +182,8 @@ public class Scheduler {
 		this.replyQueue.clear();
 		
 		notifyAll();
+		
+		this.states = SchedulerStates.WAITING;
 		
 		return reply;
 	}
@@ -208,5 +218,10 @@ public class Scheduler {
 	 */
 	public int getRepliesRecieved() {
 		return this.repliesRecieved;
+	}
+	
+	public Scheduler.SchedulerStates getSchedulerState()
+	{
+		return this.states;
 	}
 }

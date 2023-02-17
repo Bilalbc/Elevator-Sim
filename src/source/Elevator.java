@@ -18,7 +18,6 @@ public class Elevator implements Runnable{
     public static enum ElevatorStates {DOORSOPEN, DOORSCLOSED, MOVINGUP, MOVINGDOWN, STOPPED};
     private ElevatorStates currState;
     
-
     /**
      * Constructor for Elevator
      * @param sch, Scheduler being used
