@@ -24,13 +24,13 @@ public class Scheduler {
 	
 	/*For now, these will have a maximum size of 1*/
 	private ArrayList<Message> messageQueue;
-	private ArrayList<Message> replyQueue;
+	private ArrayList<Integer> replyQueue;
 	
 	private boolean closed = false;
 	private int messageRecieved;
 	private int repliesRecieved;
 	
-	private enum SchedulerStates {WAITING, RECEIVING, FAILURE, SENDING};
+	public static enum SchedulerStates {WAITING, RECEIVING, FAILURE, SENDING};
 	private SchedulerStates states;
 	
 	private HashMap<Integer, ArrayList<Integer>> elevatorQueue;
@@ -68,13 +68,16 @@ public class Scheduler {
 				System.err.println(e);
 			}
 		} */
-
-		this.messageQueue.add(message);
 		
-		this.elevatorQueue.get(ELEVATOR1).add(this.messageQueue.get(0).startFloor());
-		this.elevatorQueue.get(ELEVATOR1).add(this.messageQueue.get(0).destinationFloor());
-		
-		this.messageQueue.remove(MESSAGE_BUFFER_FIRST_INDEX);
+		if (elevatorQueue.get(ELEVATOR1).isEmpty())
+		{
+			this.elevatorQueue.get(ELEVATOR1).add(message.startFloor());
+			this.elevatorQueue.get(ELEVATOR1).add(message.destinationFloor());
+		}
+		else
+		{
+			this.messageQueue.add(message);
+		}
 		
 		this.states = SchedulerStates.WAITING;
 
@@ -113,7 +116,7 @@ public class Scheduler {
 	 *
 	 *@param message of type Message to reply
 	 */
-	public synchronized void passReply(Message reply)
+	public synchronized void passState(int currentFloor, Elevator.ElevatorStates elevatorState)
 	{
 		while ((this.replyQueue.size() == REPLY_BUFFER_SIZE)) {
 			try {
@@ -123,8 +126,23 @@ public class Scheduler {
 			}
 		}
 		
-		this.replyQueue.add(reply);
-		this.repliesRecieved++;
+		int startFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).startFloor();
+		int destFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).destinationFloor();
+		
+		boolean movingUp = elevatorState == Elevator.ElevatorStates.MOVINGUP;
+		boolean movingDown = elevatorState == Elevator.ElevatorStates.MOVINGDOWN;
+		boolean startFloorBelow = startFloor < currentFloor;
+		boolean startFloorAbove = startFloor > currentFloor;
+		boolean startFloorEquals = startFloor == currentFloor;
+		
+		if ((movingUp && startFloorAbove) || (movingDown && startFloorBelow) || (startFloorEquals))
+		{
+			this.elevatorQueue.get(ELEVATOR1).add(startFloor);
+			this.elevatorQueue.get(ELEVATOR1).add(destFloor);
+			this.messageQueue.remove(MESSAGE_BUFFER_FIRST_INDEX);
+		}
+		
+		this.replyQueue.add(currentFloor);
 		
 		notifyAll();	
 	}
@@ -134,9 +152,9 @@ public class Scheduler {
 	 * @param none
 	 * @return Message to reply
 	 * */
-	public synchronized Message readReply()
+	public synchronized Integer readReply()
 	{
-		Message reply;
+		Integer reply;
 		
 		while(this.replyQueue.size() != REPLY_BUFFER_SIZE)
 		{

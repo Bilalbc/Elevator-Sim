@@ -50,7 +50,7 @@ public class Floor implements Runnable{
 				Message req = createRequest(reader);
 				System.out.println("Passing message: " + req);
 				scheduler.passMessage(req);
-				System.out.println("Reading reply: " + scheduler.readReply().getReturnMessage());
+				System.out.println("Elevator 1 is at floor is: " + scheduler.readReply());
 				
 				Thread.sleep(500);
 			}

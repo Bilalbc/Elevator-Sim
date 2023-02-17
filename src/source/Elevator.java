@@ -15,8 +15,8 @@ public class Elevator implements Runnable{
     private int assignedNum;
     private Scheduler scheduler;
     private ArrayList<Integer> destinationQueue;
-    private enum elevatorStates {DOORSOPEN, DOORSCLOSED, MOVINGUP, MOVINGDOWN, STOPPED};
-    private elevatorStates currState;
+    public static enum ElevatorStates {DOORSOPEN, DOORSCLOSED, MOVINGUP, MOVINGDOWN, STOPPED};
+    private ElevatorStates currState;
     
 
     /**
@@ -28,7 +28,7 @@ public class Elevator implements Runnable{
         this.currentFloor = 1;
         destinationQueue = new ArrayList<>();
         this.assignedNum = 1; //only have 1 elevator right now
-        this.currState = elevatorStates.DOORSCLOSED; //Elevator starts at a closed state
+        this.currState = ElevatorStates.DOORSCLOSED; //Elevator starts at a closed state
     }
 
     @Override
@@ -38,39 +38,40 @@ public class Elevator implements Runnable{
      */
     public void run() {
     	while (!scheduler.isClosed()) {
-    		this.currState = elevatorStates.DOORSCLOSED; //Door starts off closed
+    		this.currState = ElevatorStates.DOORSCLOSED; //Door starts off closed
     		if(!(destinationQueue.isEmpty())){
 	    		for(int i : destinationQueue) {
 	    			if(i == currentFloor) {
-	    				currState = elevatorStates.STOPPED;
-	    				currState = elevatorStates.DOORSOPEN; //If there is a destination request for the current floor, the doors open
+	    				currState = ElevatorStates.STOPPED;
+	    				currState = ElevatorStates.DOORSOPEN; //If there is a destination request for the current floor, the doors open
 	    			}
 	    		}
     		}
+    		
     		destinationQueue.clear();
-    		destinationQueue = scheduler.readMessage().clone();
+    		destinationQueue = scheduler.readMessage();
             System.out.println("Recieved Destinations");
-            this.currState = elevatorStates.DOORSCLOSED;
+            this.currState = ElevatorStates.DOORSCLOSED;
             
             if(destinationQueue.get(0) > currentFloor) { // check if the elevator needs to move up or down
-            	currState = elevatorStates.MOVINGUP;
+            	currState = ElevatorStates.MOVINGUP;
             }
             else {
-            	currState = elevatorStates.MOVINGDOWN;
+            	currState = ElevatorStates.MOVINGDOWN;
             }
             
             System.out.println("Elevator is Moving");
             //Moves up or down depending on the State of the elevator
-            if(currState.equals(elevatorStates.MOVINGUP)) {
+            if(currState.equals(ElevatorStates.MOVINGUP)) {
             	currentFloor++;
             }
-            if(currState.equals(elevatorStates.MOVINGDOWN)) {
+            if(currState.equals(ElevatorStates.MOVINGDOWN)) {
             	currentFloor--;
             }
             
              //Elevator reached a floor
             
-            scheduler.passReply(currentFloor, currState);
+            scheduler.passState(currentFloor, currState);
     		
     		try {
 				Thread.sleep(1000);
