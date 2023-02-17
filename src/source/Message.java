@@ -29,6 +29,14 @@ public class Message {
 	}
 	
 	/**
+	 * Message Constructor
+	 * @param reply, String: Reply message
+	 */
+	public Message(String reply) {
+		this.returnMessage = reply;
+	}
+	
+	/**
 	 * Getter for the request time
 	 * @return time, String
 	 */

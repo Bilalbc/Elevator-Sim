@@ -24,7 +24,7 @@ public class Scheduler {
 	
 	/*For now, these will have a maximum size of 1*/
 	private ArrayList<Message> messageQueue;
-	private ArrayList<Integer> replyQueue;
+	private ArrayList<Message> replyQueue;
 	
 	private boolean closed = false;
 	private int messageRecieved;
@@ -60,24 +60,23 @@ public class Scheduler {
 	 */
 	public synchronized void passMessage(Message message)
 	{
-		this.states = SchedulerStates.RECEIVING;
 
-		/*
-		while ((this.messageQueue.size() == MESSAGE_BUFFER_SIZE)) {
+		
+		while (states != SchedulerStates.WAITING) { //If the scheduler is not in the WAITING state, thread must wait until it is
 			try {
 				wait();
 			} catch (InterruptedException e) {
 				System.err.println(e);
 			}
-		} */
+		} 
+		this.states = SchedulerStates.RECEIVING; //Set to RECEIVING information
+		
+		this.messageQueue.add(message); //add the message to the message queue
 		
 		
-		this.messageQueue.add(message);
-		
-		
-		this.states = SchedulerStates.WAITING;
+		this.states = SchedulerStates.WAITING; //Set back to WAITING
 
-		notifyAll();	
+		notifyAll();	//Let all threads know its ready
 	}
 	
 	/**
@@ -87,26 +86,26 @@ public class Scheduler {
 	 */
 	public synchronized int readMessage()
 	{
-		this.states = SchedulerStates.SENDING;
+
+		while(states != SchedulerStates.WAITING) //If the scheduler is not in the WAITING state, thread must wait until it is
+		{
+			try {
+				wait();
+			} catch (InterruptedException e) {
+				System.err.println(e);
+			}
+		} 
 		
-		
-		//while(this.elevatorQueue.get(ELEVATOR1).size() == 0)
-		//{
-		//	try {
-		//		wait();
-		//	} catch (InterruptedException e) {
-		//		System.err.println(e);
-		//	}
-		//} 
-		
-		notifyAll();
-		
-		this.states = SchedulerStates.WAITING;
-		if(elevatorQueue.get(ELEVATOR1).size() == 0) {
-			return 0;
+		this.states = SchedulerStates.SENDING; //SENDING INFORMATION
+		if(elevatorQueue.get(ELEVATOR1).size() == 0) { //IF THERE ARE NO NEW DESTINATIONS
+			this.states = SchedulerStates.WAITING; //Back to WAITING
+			return 0; 
 		}
-		int reply = this.elevatorQueue.get(ELEVATOR1).get(0);
-		this.elevatorQueue.get(ELEVATOR1).remove(0);
+		int reply = this.elevatorQueue.get(ELEVATOR1).get(0); //Get the next destination and give it to the elevator
+		this.elevatorQueue.get(ELEVATOR1).remove(0); //Remove the destination
+		
+		this.states = SchedulerStates.WAITING; // back to WAITING
+		notifyAll();
 		
 		return reply;
 	}
@@ -117,20 +116,23 @@ public class Scheduler {
 	 *
 	 *@param message of type Message to reply
 	 */
-	public synchronized void passState(int currentFloor, Elevator.ElevatorStates elevatorState)
+	public synchronized void passState(int currentFloor, Elevator.ElevatorStates elevatorState, int elevatorNum)
 	{
-		//while ((this.messageQueue.size() == 0)) {
-		//	try {
-		//		System.out.println("I'm waiting too");
-		//		wait();
-		//	} catch (InterruptedException e) {
-		//		System.err.println(e);
-		//	}
-		//}
-		if(messageQueue.size() != 0) {
-			int startFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).startFloor();
+		while (states != SchedulerStates.WAITING) { //If the scheduler is not in the WAITING state, thread must wait until it is
+			try {
+				wait();
+			} catch (InterruptedException e) {
+				System.err.println(e);
+			}
+		}
+		
+		states = SchedulerStates.RECEIVING; //Getting information
+		if(messageQueue.size() != 0) { //Logic to get destinations for elevator, check if there are messages available
+			int startFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).startFloor(); //Get start and destination floor of the request
 			int destFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).destinationFloor();
 			
+			
+			//Checks for logic
 			boolean movingUp = elevatorState == Elevator.ElevatorStates.MOVINGUP;
 			boolean movingDown = elevatorState == Elevator.ElevatorStates.MOVINGDOWN;
 			boolean doorsClosed = elevatorState == Elevator.ElevatorStates.DOORSCLOSED;
@@ -138,7 +140,7 @@ public class Scheduler {
 			boolean startFloorAbove = startFloor > currentFloor;
 			boolean startFloorEquals = startFloor == currentFloor;
 			
-			
+			//Checks to see if the elevator is able to take on said request
 			if ((movingUp && startFloorAbove) || (movingDown && startFloorBelow) || (startFloorEquals) || (doorsClosed && elevatorQueue.get(ELEVATOR1).isEmpty()))
 			{
 				this.elevatorQueue.get(ELEVATOR1).add(startFloor);
@@ -148,7 +150,10 @@ public class Scheduler {
 			}
 		}
 		
-		this.replyQueue.add(currentFloor);
+		//Add the return message of the elevator (current floor, state, and elevator number) for the floor to read
+		Message reply = new Message("Elevator " + elevatorNum + ": is on floor " + currentFloor + " and is " + elevatorState);
+		this.replyQueue.add(reply);
+		states = SchedulerStates.WAITING; //Back to WAITING
 		
 		notifyAll();	
 	}
@@ -158,9 +163,9 @@ public class Scheduler {
 	 * @param none
 	 * @return Message to reply
 	 * */
-	public synchronized Integer readReply()
+	public synchronized Message readReply()
 	{
-		while ((replyQueue.size() == 0)) {
+		while ((replyQueue.size() == 0) || (states != SchedulerStates.WAITING)) { //IF the replyQueue is empty or not in WAITING State
 			try {
 				wait();
 			} catch (InterruptedException e) {
@@ -168,10 +173,14 @@ public class Scheduler {
 			}
 		}
 		
-		Integer reply;
+		Message reply;
 		
-		reply = this.replyQueue.get(BUFFER_EMPTY);
-		this.replyQueue.clear();
+		states = SchedulerStates.SENDING; // SENDING INFO
+		
+		reply = this.replyQueue.get(BUFFER_EMPTY); //Get the request
+		this.replyQueue.clear(); //empty Queue
+		
+		states = SchedulerStates.WAITING; //WAITING
 		
 		notifyAll();
 		
