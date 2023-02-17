@@ -48,7 +48,7 @@ public class Scheduler {
 		this.repliesRecieved = 0;
 		this.elevatorQueue = new HashMap<>();
 		this.elevatorQueue.put(ELEVATOR1, new ArrayList<Integer>());
-		
+
 		this.states = SchedulerStates.WAITING;
 	}
 	
@@ -107,6 +107,8 @@ public class Scheduler {
 		this.states = SchedulerStates.WAITING; // back to WAITING
 		notifyAll();
 		
+		this.states = SchedulerStates.WAITING;
+		
 		return reply;
 	}
 
@@ -155,6 +157,8 @@ public class Scheduler {
 		this.replyQueue.add(reply);
 		states = SchedulerStates.WAITING; //Back to WAITING
 		
+		this.states = SchedulerStates.WAITING;
+		
 		notifyAll();	
 	}
 	
@@ -183,6 +187,8 @@ public class Scheduler {
 		states = SchedulerStates.WAITING; //WAITING
 		
 		notifyAll();
+		
+		this.states = SchedulerStates.WAITING;
 		
 		return reply;
 	}
@@ -217,5 +223,10 @@ public class Scheduler {
 	 */
 	public int getRepliesRecieved() {
 		return this.repliesRecieved;
+	}
+	
+	public Scheduler.SchedulerStates getSchedulerState()
+	{
+		return this.states;
 	}
 }
