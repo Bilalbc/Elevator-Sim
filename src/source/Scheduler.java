@@ -47,6 +47,7 @@ public class Scheduler {
 		this.messageRecieved = 0;
 		this.repliesRecieved = 0;
 		this.elevatorQueue = new HashMap<>();
+		this.elevatorQueue.put(ELEVATOR1, new ArrayList<Integer>());
 		
 		this.states = SchedulerStates.WAITING;
 	}
@@ -70,19 +71,13 @@ public class Scheduler {
 			}
 		} */
 		
-		if (elevatorQueue.get(ELEVATOR1).isEmpty())
-		{
-			this.elevatorQueue.get(ELEVATOR1).add(message.startFloor());
-			this.elevatorQueue.get(ELEVATOR1).add(message.destinationFloor());
-		}
-		else
-		{
-			this.messageQueue.add(message);
-		}
+		
+		this.messageQueue.add(message);
+		
 		
 		this.states = SchedulerStates.WAITING;
 
-		//notifyAll();	
+		notifyAll();	
 	}
 	
 	/**
@@ -90,25 +85,30 @@ public class Scheduler {
 	 * @param none
 	 * @return Message to be read
 	 */
-	public synchronized ArrayList<Integer> readMessage()
+	public synchronized int readMessage()
 	{
 		this.states = SchedulerStates.SENDING;
 		
-		/*
-		while(this.messageQueue.size() != MESSAGE_BUFFER_SIZE)
-		{
-			try {
-				wait();
-			} catch (InterruptedException e) {
-				System.err.println(e);
-			}
-		} */
 		
-		//notifyAll();
+		//while(this.elevatorQueue.get(ELEVATOR1).size() == 0)
+		//{
+		//	try {
+		//		wait();
+		//	} catch (InterruptedException e) {
+		//		System.err.println(e);
+		//	}
+		//} 
+		
+		notifyAll();
 		
 		this.states = SchedulerStates.WAITING;
+		if(elevatorQueue.get(ELEVATOR1).size() == 0) {
+			return 0;
+		}
+		int reply = this.elevatorQueue.get(ELEVATOR1).get(0);
+		this.elevatorQueue.get(ELEVATOR1).remove(0);
 		
-		return this.elevatorQueue.get(ELEVATOR1);
+		return reply;
 	}
 
 	/**
@@ -119,28 +119,33 @@ public class Scheduler {
 	 */
 	public synchronized void passState(int currentFloor, Elevator.ElevatorStates elevatorState)
 	{
-		while ((this.replyQueue.size() == REPLY_BUFFER_SIZE)) {
-			try {
-				wait();
-			} catch (InterruptedException e) {
-				System.err.println(e);
+		//while ((this.messageQueue.size() == 0)) {
+		//	try {
+		//		System.out.println("I'm waiting too");
+		//		wait();
+		//	} catch (InterruptedException e) {
+		//		System.err.println(e);
+		//	}
+		//}
+		if(messageQueue.size() != 0) {
+			int startFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).startFloor();
+			int destFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).destinationFloor();
+			
+			boolean movingUp = elevatorState == Elevator.ElevatorStates.MOVINGUP;
+			boolean movingDown = elevatorState == Elevator.ElevatorStates.MOVINGDOWN;
+			boolean doorsClosed = elevatorState == Elevator.ElevatorStates.DOORSCLOSED;
+			boolean startFloorBelow = startFloor < currentFloor;
+			boolean startFloorAbove = startFloor > currentFloor;
+			boolean startFloorEquals = startFloor == currentFloor;
+			
+			
+			if ((movingUp && startFloorAbove) || (movingDown && startFloorBelow) || (startFloorEquals) || (doorsClosed && elevatorQueue.get(ELEVATOR1).isEmpty()))
+			{
+				this.elevatorQueue.get(ELEVATOR1).add(startFloor);
+				this.elevatorQueue.get(ELEVATOR1).add(destFloor);
+				this.messageQueue.remove(MESSAGE_BUFFER_FIRST_INDEX);
+	
 			}
-		}
-		
-		int startFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).startFloor();
-		int destFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).destinationFloor();
-		
-		boolean movingUp = elevatorState == Elevator.ElevatorStates.MOVINGUP;
-		boolean movingDown = elevatorState == Elevator.ElevatorStates.MOVINGDOWN;
-		boolean startFloorBelow = startFloor < currentFloor;
-		boolean startFloorAbove = startFloor > currentFloor;
-		boolean startFloorEquals = startFloor == currentFloor;
-		
-		if ((movingUp && startFloorAbove) || (movingDown && startFloorBelow) || (startFloorEquals))
-		{
-			this.elevatorQueue.get(ELEVATOR1).add(startFloor);
-			this.elevatorQueue.get(ELEVATOR1).add(destFloor);
-			this.messageQueue.remove(MESSAGE_BUFFER_FIRST_INDEX);
 		}
 		
 		this.replyQueue.add(currentFloor);
@@ -155,16 +160,15 @@ public class Scheduler {
 	 * */
 	public synchronized Integer readReply()
 	{
-		Integer reply;
-		
-		while(this.replyQueue.size() != REPLY_BUFFER_SIZE)
-		{
+		while ((replyQueue.size() == 0)) {
 			try {
 				wait();
 			} catch (InterruptedException e) {
 				System.err.println(e);
 			}
 		}
+		
+		Integer reply;
 		
 		reply = this.replyQueue.get(BUFFER_EMPTY);
 		this.replyQueue.clear();

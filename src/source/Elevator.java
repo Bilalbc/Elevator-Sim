@@ -14,7 +14,7 @@ public class Elevator implements Runnable{
     private int currentFloor; 
     private int assignedNum;
     private Scheduler scheduler;
-    private ArrayList<Integer> destinationQueue;
+    private int destination = 0;
     public static enum ElevatorStates {DOORSOPEN, DOORSCLOSED, MOVINGUP, MOVINGDOWN, STOPPED};
     private ElevatorStates currState;
     
@@ -26,7 +26,6 @@ public class Elevator implements Runnable{
     public Elevator(Scheduler sch) {
         this.scheduler = sch;
         this.currentFloor = 1;
-        destinationQueue = new ArrayList<>();
         this.assignedNum = 1; //only have 1 elevator right now
         this.currState = ElevatorStates.DOORSCLOSED; //Elevator starts at a closed state
     }
@@ -38,47 +37,56 @@ public class Elevator implements Runnable{
      */
     public void run() {
     	while (!scheduler.isClosed()) {
-    		this.currState = ElevatorStates.DOORSCLOSED; //Door starts off closed
-    		if(!(destinationQueue.isEmpty())){
-	    		for(int i : destinationQueue) {
-	    			if(i == currentFloor) {
-	    				currState = ElevatorStates.STOPPED;
-	    				currState = ElevatorStates.DOORSOPEN; //If there is a destination request for the current floor, the doors open
-	    			}
-	    		}
-    		}
     		
-    		destinationQueue.clear();
-    		destinationQueue = scheduler.readMessage();
-            System.out.println("Recieved Destinations");
-            this.currState = ElevatorStates.DOORSCLOSED;
-            
-            if(destinationQueue.get(0) > currentFloor) { // check if the elevator needs to move up or down
-            	currState = ElevatorStates.MOVINGUP;
-            }
-            else {
-            	currState = ElevatorStates.MOVINGDOWN;
-            }
-            
-            System.out.println("Elevator is Moving");
-            //Moves up or down depending on the State of the elevator
-            if(currState.equals(ElevatorStates.MOVINGUP)) {
-            	currentFloor++;
-            }
-            if(currState.equals(ElevatorStates.MOVINGDOWN)) {
-            	currentFloor--;
-            }
-            
-             //Elevator reached a floor
-            
-            scheduler.passState(currentFloor, currState);
+    		scheduler.passState(currentFloor, currState); //Lets the scheduler know which floor it is on
     		
     		try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+    		
+			if(destination == currentFloor) {
+				currState = ElevatorStates.STOPPED;
+				currState = ElevatorStates.DOORSOPEN; //If there is a destination request for the current floor, the doors open
+			}
+	    		
+    		
+    		
+    		if(currentFloor == destination || destination == 0) {
+    			
+    			int newDestination = scheduler.readMessage();
+    			if(newDestination != 0) {
+    				destination = newDestination;
+    			}
+    			if(currentFloor == destination) {
+    				scheduler.setClosed();
+    			}
+    		}
+    		
+            this.currState = ElevatorStates.DOORSCLOSED;
+            
+            if(destination != 0) {
+	            if(destination > currentFloor) { // check if the elevator needs to move up or down
+	            	currState = ElevatorStates.MOVINGUP;
+	            }
+	            else {
+	            	currState = ElevatorStates.MOVINGDOWN;
+	            }
+	            
+	            //Moves up or down depending on the State of the elevator
+	            if(currState.equals(ElevatorStates.MOVINGUP)) {
+	            	currentFloor++;
+	            }
+	            if(currState.equals(ElevatorStates.MOVINGDOWN)) {
+	            	currentFloor--;
+	            }
+	            
+            }
+    		
     	}
+    	
+    	System.exit(0);
     }
 
 }

@@ -46,18 +46,24 @@ public class Floor implements Runnable{
 		try {
 			File file = new File("src//source//Requests.csv");
 			Scanner reader = new Scanner(file);
-			while(reader.hasNextLine()) {
-				Message req = createRequest(reader);
-				System.out.println("Passing message: " + req);
-				scheduler.passMessage(req);
-				System.out.println("Elevator 1 is at floor is: " + scheduler.readReply());
-				
+			while(!scheduler.isClosed()) {
+				if(reader.hasNextLine()) {
+					Message req = createRequest(reader);
+					System.out.println("Passing message: " + req);
+					scheduler.passMessage(req);
+					
+				}
+				int returned = scheduler.readReply();
+				System.out.println("Elevator 1 is at floor is: " + returned);
 				Thread.sleep(500);
 			}
 			
-			scheduler.setClosed();
 			reader.close();
+			System.exit(0);
 		} catch (FileNotFoundException | InterruptedException e) {}
+	
+		
 	}
+	
 	
 }
