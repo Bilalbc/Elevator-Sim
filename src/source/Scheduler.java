@@ -31,6 +31,7 @@ public class Scheduler {
 	private int repliesRecieved;
 	
 	public static enum SchedulerStates {WAITING, RECEIVING, FAILURE, SENDING};
+	
 	private SchedulerStates states;
 	
 	private HashMap<Integer, ArrayList<Integer>> elevatorQueue;
