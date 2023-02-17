@@ -12,12 +12,15 @@
 package source;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Scheduler {
 	
 	public static final int REPLY_BUFFER_SIZE = 1;
-	public static final int MESSAGE_BUFFER_SIZE = 1;
+	public static final int MESSAGE_BUFFER_FIRST_INDEX = 0;
 	public static final int BUFFER_EMPTY = 0;
+	
+	public static final int ELEVATOR1 = 0;
 	
 	/*For now, these will have a maximum size of 1*/
 	private ArrayList<Message> messageQueue;
@@ -27,7 +30,11 @@ public class Scheduler {
 	private int messageRecieved;
 	private int repliesRecieved;
 	
-	private enum schedulerStates {RECEIVING, FAILURE, SENDING};
+	private enum SchedulerStates {WAITING, RECEIVING, FAILURE, SENDING};
+	private SchedulerStates states;
+	
+	private HashMap<Integer, ArrayList<Integer>> elevatorQueue;
+	
 	
 	/**
 	 * Constructor for class Scheduler. Initializes both the messageQueue and the replyQueue ArrayLists
@@ -38,6 +45,9 @@ public class Scheduler {
 		this.replyQueue = new ArrayList<>();
 		this.messageRecieved = 0;
 		this.repliesRecieved = 0;
+		this.elevatorQueue = new HashMap<>();
+		
+		this.states = SchedulerStates.WAITING;
 	}
 	
 	/**
@@ -48,18 +58,27 @@ public class Scheduler {
 	 */
 	public synchronized void passMessage(Message message)
 	{
+		this.states = SchedulerStates.RECEIVING;
+
+		/*
 		while ((this.messageQueue.size() == MESSAGE_BUFFER_SIZE)) {
 			try {
 				wait();
 			} catch (InterruptedException e) {
 				System.err.println(e);
 			}
-		}
-		
+		} */
+
 		this.messageQueue.add(message);
-		this.messageRecieved++;
 		
-		notifyAll();	
+		this.elevatorQueue.get(ELEVATOR1).add(this.messageQueue.get(0).startFloor());
+		this.elevatorQueue.get(ELEVATOR1).add(this.messageQueue.get(0).destinationFloor());
+		
+		this.messageQueue.remove(MESSAGE_BUFFER_FIRST_INDEX);
+		
+		this.states = SchedulerStates.WAITING;
+
+		//notifyAll();	
 	}
 	
 	/**
@@ -67,10 +86,11 @@ public class Scheduler {
 	 * @param none
 	 * @return Message to be read
 	 */
-	public synchronized Message readMessage()
+	public synchronized ArrayList<Integer> readMessage()
 	{
-		Message message;
+		this.states = SchedulerStates.SENDING;
 		
+		/*
 		while(this.messageQueue.size() != MESSAGE_BUFFER_SIZE)
 		{
 			try {
@@ -78,14 +98,13 @@ public class Scheduler {
 			} catch (InterruptedException e) {
 				System.err.println(e);
 			}
-		}
+		} */
 		
-		message = this.messageQueue.get(BUFFER_EMPTY);
-		this.messageQueue.clear(); //Since there is only one item expected at all times, can just clear queue to empty it. 
+		//notifyAll();
 		
-		notifyAll();
+		this.states = SchedulerStates.WAITING;
 		
-		return message;
+		return this.elevatorQueue.get(ELEVATOR1);
 	}
 
 	/**
