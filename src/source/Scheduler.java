@@ -107,6 +107,7 @@ public class Scheduler {
 		this.states = SchedulerStates.WAITING; // back to WAITING
 		notifyAll();
 		
+		
 		this.states = SchedulerStates.WAITING;
 		
 		return reply;
@@ -156,6 +157,8 @@ public class Scheduler {
 		Message reply = new Message("Elevator " + elevatorNum + ": is on floor " + currentFloor + " and is " + elevatorState);
 		this.replyQueue.add(reply);
 		states = SchedulerStates.WAITING; //Back to WAITING
+		
+		this.states = SchedulerStates.WAITING;
 		
 		this.states = SchedulerStates.WAITING;
 		
