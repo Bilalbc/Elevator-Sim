@@ -3,7 +3,7 @@ package source;
  * The message class stores information about requests inside to be sent between the floor and elevator.
  * @author Kousha Motazedian
  * @version 2.0
- * @date February 3rd, 2023
+ * @date February 27th, 2023
  *
  */
 public class Message {
@@ -26,6 +26,14 @@ public class Message {
 		this.direction = direction;
 		this.startFloor = startFloor;
 		this.destinationFloor = destinationFloor;
+	}
+	
+	/**
+	 * Message Constructor
+	 * @param reply, String: Reply message
+	 */
+	public Message(String reply) {
+		this.returnMessage = reply;
 	}
 	
 	/**

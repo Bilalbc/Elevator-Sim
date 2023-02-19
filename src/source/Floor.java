@@ -8,7 +8,7 @@ import java.util.Scanner;
  * 
  * @author Kousha Motazedian, Matthew Parker
  * @version 2.0
- * @date February 4th, 2023
+ * @date February 27th, 2023
  */
 public class Floor implements Runnable{
 	private Scheduler scheduler;
@@ -46,18 +46,22 @@ public class Floor implements Runnable{
 		try {
 			File file = new File("src//source//Requests.csv");
 			Scanner reader = new Scanner(file);
-			while(reader.hasNextLine()) {
-				Message req = createRequest(reader);
-				System.out.println("Passing message: " + req);
-				scheduler.passMessage(req);
-				System.out.println("Reading reply: " + scheduler.readReply().getReturnMessage());
-				
+			while(!scheduler.isClosed()) {
+				if(reader.hasNextLine()) {
+					Message req = createRequest(reader);
+					System.out.println("Passing message: " + req);
+					scheduler.passMessage(req);
+					
+				}
+				Message returned = scheduler.readReply();
+				System.out.println(returned.getReturnMessage());
 				Thread.sleep(500);
 			}
 			
-			scheduler.setClosed();
 			reader.close();
-		} catch (FileNotFoundException | InterruptedException e) {}
+			System.exit(0);
+		} catch (FileNotFoundException | InterruptedException e) {
+			System.out.println("filenotfound");
+		}
 	}
-	
 }
