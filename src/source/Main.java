@@ -1,5 +1,7 @@
 package source;
 
+import java.io.File;
+
 /** 
  * @author Bilal Chaudhry
  * @version 2.0
@@ -17,7 +19,8 @@ public class Main {
 	public static void main(String[] args) {
 		Scheduler s = new Scheduler();
 
-		Thread f = new Thread(new Floor(s), "Floor");
+		File file = new File("src//source//Requests.csv");
+		Thread f = new Thread(new Floor(s, file), "Floor");
 		Thread e = new Thread(new Elevator(s), "Elevator");
 
 		f.start();

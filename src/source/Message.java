@@ -92,7 +92,7 @@ public class Message {
 	 * toString override for the object.
 	 */
 	public String toString() {
-		return this.direction + " " + this.time + " " + this.destinationFloor + " " + this.startFloor;
+		return this.direction + " " + this.time + " Start Floor: " + this.startFloor+ " Destination Floor : " + this.destinationFloor ;
 	}
 	
 	@Override
