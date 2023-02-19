@@ -63,7 +63,7 @@ public class Elevator implements Runnable {
 				Thread.sleep(1000);
 				// If the elevator has reached its destination or does not have one (0)
 				if (currentFloor == destination || destination == 0) {
-					int newDestination = scheduler.readMessage(); // get new destination from sch
+					int newDestination = scheduler.readMessage();
 
 					// If the new destination is not 0 (meaning no destinations left), the elevator
 					// takes on the new destination
@@ -71,11 +71,13 @@ public class Elevator implements Runnable {
 						destination = newDestination;
 					}
 
-					// If the destination still has not changed (because readMessage returned 0)
-					// close the system.
+					// If the destination still has not changed (because readMessage returned 0),
+					// floor is not sending anymore requests, and the scheduler is holding no more
+					// requests for the elevator, close the system.
 					if (currentFloor == destination && scheduler.isRequestsComplete()
 							&& scheduler.getElevatorQueueSize() == 0) {
 
+						// Pass state to ensure floor is not waiting forever
 						scheduler.passState(currentFloor, currentState, assignedNum);
 						scheduler.setClosed();
 					}
@@ -87,9 +89,6 @@ public class Elevator implements Runnable {
 					} else if (destination < currentFloor) {
 						currentState = ElevatorStates.MOVINGDOWN;
 					}
-
-					// can maybe just make this into another method
-					// Moves up or down depending on the State of the elevator
 
 					Thread.sleep(1000);
 					if (currentState.equals(ElevatorStates.MOVINGUP)) {
@@ -107,36 +106,31 @@ public class Elevator implements Runnable {
 		}
 	}
 
+	/**
+	 * Getter method to access the currentFloor of the Elevator
+	 * 
+	 * @return int : current floor
+	 */
 	public int getCurrentFloor() {
 		return currentFloor;
 	}
 
-	public void setCurrentFloor(int currentFloor) {
-		this.currentFloor = currentFloor;
-	}
-
+	/**
+	 * Getter method to access the assignedNum of the elevator
+	 * 
+	 * @return int : assigned Number
+	 */
 	public int getAssignedNum() {
 		return assignedNum;
 	}
 
-	public void setAssignedNum(int assignedNum) {
-		this.assignedNum = assignedNum;
-	}
-
-	public int getDestination() {
-		return destination;
-	}
-
-	public void setDestination(int destination) {
-		this.destination = destination;
-	}
-
+	/**
+	 * Getter method for the current State of the elevator
+	 * 
+	 * @return ElevatorStates : the current state of the elevator
+	 */
 	public ElevatorStates getcurrentState() {
 		return currentState;
-	}
-
-	public void setcurrentState(ElevatorStates currentState) {
-		this.currentState = currentState;
 	}
 
 }

@@ -86,7 +86,7 @@ public class Floor implements Runnable {
 					// if the delay to send the request has elapsed
 					if (messageDelay <= 0) {
 						Message req = createRequest(reader);
-						if (req != null) {
+						if (req != null) { // if request was valid
 							System.out.println("Passing message: " + req);
 							scheduler.passMessage(req);
 						}
@@ -95,7 +95,7 @@ public class Floor implements Runnable {
 						// delay by part of total delay to allow floor to continue to receive replies
 						// from the elevator
 						messageDelay -= 100;
-						Thread.sleep(10);
+						Thread.sleep(100);
 					}
 				} 
 				else {
@@ -104,7 +104,6 @@ public class Floor implements Runnable {
 				}
 				Message returned = scheduler.readReply();
 				System.out.println(returned.getReturnMessage());
-				Thread.sleep(500);
 
 			}
 			reader.close();

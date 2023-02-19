@@ -14,26 +14,53 @@ import source.Floor;
 import source.Message;
 import source.Scheduler;
 
+/**
+ * @author Bilal Chaudhry
+ * @version 2.0
+ * @date February 27th, 2023
+ * 
+ *       Unit test class for Elevator-sim
+ * 
+ *       Tests states, and events for Elevator and Scheduler ,and the passing of
+ *       messages between the three classes
+ *
+ */
 public class Iteration2Test {
 
 	private File testFile;
 	private File badTestFile;
 
+	/**
+	 * Execute before test cases Setup testFile containing one entry of a proper
+	 * request, and a badTestFile containing one entry of an improper request.
+	 */
 	@Before
 	public void setUp() {
 		this.testFile = new File("src//test//testData.csv");
+		this.badTestFile = new File("src//test//badTestData.csv");
 	}
 
+	/**
+	 * Test states and events for scheduler class, asserting the expected state
+	 * after an event is made. Events simulate the standard execution expected
+	 * 
+	 * Tests are not concerned with the contents of the messages being passed, nor
+	 * the output of the method, just the state transitions
+	 * 
+	 * @result test passes if the Scheduler enters all the correct states after each
+	 *         event
+	 */
 	@Test
 	public void testSchedulerStates() {
 		System.out.println("============ testsSchedulerStates ============");
 
+		// reset objects
 		Scheduler sch = new Scheduler();
 		Elevator ev = new Elevator(sch);
 
 		System.out.println(sch.getSchedulerState());
-
 		assertEquals(Scheduler.SchedulerStates.WAITING, sch.getSchedulerState());
+
 		try {
 			sch.passMessage(createRequest());
 			Thread.sleep(500);
@@ -63,15 +90,27 @@ public class Iteration2Test {
 
 			System.out.println(sch.getSchedulerState());
 			assertEquals(Scheduler.SchedulerStates.WAITING, sch.getSchedulerState());
+
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 	}
 
+	/**
+	 * Test states and events for Elevator class, asserting the expected state after
+	 * an event is made. Events simulate the standard execution expected
+	 * 
+	 * Tests are not concerned with the contents of the messages being passed, nor
+	 * the output of the method, just the state transitions.
+	 * 
+	 * @result test passes if the Elevator enters all the correct states after each
+	 *         event
+	 */
 	@Test
 	public void testElevatorStates() {
 		System.out.println("============ testElevatorStates ============");
-
+		
+		// reset objects
 		Scheduler sch = new Scheduler();
 		Elevator ev = new Elevator(sch);
 
@@ -107,10 +146,17 @@ public class Iteration2Test {
 
 	}
 
+	/**
+	 * Test full pipeline, allowing threads to run to completion.
+	 * 
+	 * @result test passes if the elevator's floor after execution is 2, the
+	 *         destination floor outlined in the testFile
+	 */
 	@Test
 	public void testPipeline() {
 		System.out.println("============ TestPipeline ============");
 
+		// reset objects
 		Scheduler sch = new Scheduler();
 		Elevator ev = new Elevator(sch);
 		Floor fl = new Floor(sch, testFile);
@@ -127,15 +173,21 @@ public class Iteration2Test {
 		assertEquals(2, ev.getCurrentFloor());
 	}
 
+	/**
+	 * Test validation method within Floor class, passing badTestFile, which
+	 * contains a request in an improper format
+	 * 
+	 * @result test passes if the error message is displayed within the console
+	 */
 	@Test
 	public void testIncorrectFormat() {
-		badTestFile = new File("src//test//badTestData.csv");
-
+		System.out.println("============ testIncorrectFormat ============");
+		
+		// reset objects
 		Scheduler sch = new Scheduler();
 		Floor fl = new Floor(sch, badTestFile);
 
 		Thread flThread = new Thread(fl, "Floor");
-
 		flThread.start();
 
 		try {
@@ -145,8 +197,12 @@ public class Iteration2Test {
 		}
 	}
 
+	/**
+	 * Helper method to create a Message from file contents read by scanner
+	 * 
+	 * @return Message created from request
+	 */
 	private Message createRequest() {
-
 		Scanner reader;
 		Message req = null;
 		try {

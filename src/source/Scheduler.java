@@ -34,7 +34,7 @@ public class Scheduler {
 	};
 
 	private SchedulerStates states;
-	private SchedulerStates previousState;
+	private SchedulerStates previousState; // for testing purposes
 
 	private HashMap<Integer, ArrayList<Integer>> elevatorQueue;
 
@@ -72,12 +72,6 @@ public class Scheduler {
 
 		this.messageQueue.add(message); // add the message to the message queue
 
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		this.states = SchedulerStates.WAITING; // Set to RECEIVING information
 		this.previousState = SchedulerStates.RECEIVING;
 		notifyAll(); // Let all threads know its ready
@@ -93,9 +87,9 @@ public class Scheduler {
 	 * @return Floor to be read.
 	 */
 	public synchronized int readMessage() {
-
-		while (states != SchedulerStates.WAITING) // If the scheduler is not in the WAITING state, thread must wait
-													// until it is
+		
+		// If the scheduler is not in the WAITING state, thread must wait	until it is
+		while (states != SchedulerStates.WAITING) 
 		{
 			try {
 				wait();
@@ -147,9 +141,8 @@ public class Scheduler {
 		states = SchedulerStates.RECEIVING; // Getting information
 		this.previousState = SchedulerStates.RECEIVING;
 		if (messageQueue.size() != 0) { // Logic to get destinations for elevator, check if there are messages available
-			int startFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).startFloor(); // Get start and
-																								// destination floor of
-																								// the request
+			 // Get start and destination floor of the request
+			int startFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).startFloor();
 			int destFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).destinationFloor();
 
 			// Checks for logic
@@ -217,7 +210,7 @@ public class Scheduler {
 	/**
 	 * Getter to see if the scheduler is closed.
 	 * 
-	 * @return closed, boolean
+	 * @return boolean: closed
 	 */
 
 	public boolean isClosed() {
@@ -231,27 +224,49 @@ public class Scheduler {
 		this.closed = true;
 	}
 
+	/**
+	 * Getter method to check the boolean flag if requests are complete
+	 * 
+	 * @return boolean : if requests are complete
+	 */
 	public boolean isRequestsComplete() {
 		return requestsComplete;
 	}
 
+	/**
+	 * Setter method to set the boolean flag requestsComplete to provided value,
+	 * Used by Floor to signal no more requests are to be passed
+	 * 
+	 * @param requestsComplete : indicates if more requests are to come
+	 */
 	public void setRequestsComplete(boolean requestsComplete) {
 		this.requestsComplete = requestsComplete;
 	}
 
+	/**
+	 * Getter method that returns the current size of the elevator queue
+	 * 
+	 * @return int : size of the elevator queue
+	 */
 	public int getElevatorQueueSize() {
 		return this.elevatorQueue.get(MESSAGE_BUFFER_FIRST_INDEX).size();
 	}
 
 	/**
-	 * 
 	 * Getter method that returns the current state of the Scheduler.
+	 * 
+	 * @return SchedulerStates : current state of the Scheduler
 	 */
-	public Scheduler.SchedulerStates getSchedulerState() {
+	public SchedulerStates getSchedulerState() {
 		return this.states;
 	}
 
-	public Scheduler.SchedulerStates getPreviousSchedulerState() {
+	/**
+	 * Getter method that returns the previous state of the Scheduler
+	 * 
+	 * @return SchedulerStates : previous state of the Scheduler
+	 */
+	public SchedulerStates getPreviousSchedulerState() {
 		return this.previousState;
 	}
 }
