@@ -1,8 +1,11 @@
 package source;
 
+import java.io.File;
+
 /** 
  * @author Bilal Chaudhry
- * @version 1.0
+ * @version 2.0
+ * @date February 27th, 2023
  * 
  * Main Class that has the main method to run the program.
  *
@@ -14,11 +17,11 @@ public class Main {
 	 * 
 	 * @param args, String[]
 	 */
-
 	public static void main(String[] args) {
 		Scheduler s = new Scheduler();
 
-		Thread f = new Thread(new Floor(s), "Floor");
+		File file = new File("src//source//Requests.csv");
+		Thread f = new Thread(new Floor(s, file), "Floor");
 		Thread e = new Thread(new Elevator(s), "Elevator");
 
 		f.start();
