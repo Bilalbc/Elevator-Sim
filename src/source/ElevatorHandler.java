@@ -35,45 +35,61 @@ public class ElevatorHandler implements Runnable{
 
 	@Override
 	public void run() {
-		byte data[] = new byte[MAX_DATA_SIZE];
-		byte ack[] = new byte[1];
-		ack[0]= (byte) 7;
 		
-		receivePacket = new DatagramPacket(data, data.length);
-	    try {        
-	   	 socket.receive(receivePacket);
-	    } catch (IOException e) {
-	       System.out.print("IO Exception: likely:");
-	       System.out.println("Receive Socket Timed Out.\n" + e);
-	       e.printStackTrace();
-	       System.exit(1);
-	    }
-	    
-	    passStateHandler(data);
-	    
-	    sendPacketAck = new DatagramPacket(ack, ack.length, receivePacket.getAddress(), receivePacket.getPort());
-	    
-	    try {        
-		 socket.send(sendPacketAck);
-		 } catch (IOException e) {
-		    System.out.print("IO Exception: likely:");
-		    System.out.println("Receive Socket Timed Out.\n" + e);
-		    e.printStackTrace();
-		    System.exit(1);
-		 }
-	    
-	    byte replyData[] = new byte[1];
-	    replyData[0] = (byte) scheduler.readMessage();
-	    sendPacket = new DatagramPacket(replyData, replyData.length, receivePacket.getAddress(), receivePacket.getPort());
-	    
-	    try {        
-		 socket.send(sendPacket);
-		 } catch (IOException e) {
-		    System.out.print("IO Exception: likely:");
-		    System.out.println("Receive Socket Timed Out.\n" + e);
-		    e.printStackTrace();
-		    System.exit(1);
-		 }
+		while (true)
+		{
+			byte data[] = new byte[MAX_DATA_SIZE];
+			byte ack[] = new byte[1];
+			ack[0]= (byte) 7;
+			
+			receivePacket = new DatagramPacket(data, data.length);
+		    try {        
+		   	 socket.receive(receivePacket);
+		    } catch (IOException e) {
+		       System.out.print("IO Exception: likely:");
+		       System.out.println("Receive Socket Timed Out.\n" + e);
+		       e.printStackTrace();
+		       System.exit(1);
+		    }
+		    
+		    passStateHandler(data);
+		    
+		    sendPacketAck = new DatagramPacket(ack, ack.length, receivePacket.getAddress(), receivePacket.getPort());
+		    
+		    try {        
+			 socket.send(sendPacketAck);
+			 } catch (IOException e) {
+			    System.out.print("IO Exception: likely:");
+			    System.out.println("Receive Socket Timed Out.\n" + e);
+			    e.printStackTrace();
+			    System.exit(1);
+			 }
+		    
+			byte requestData[] = new byte[MAX_DATA_SIZE];
+			receivePacket = new DatagramPacket(requestData, requestData.length);
+		    
+		    try {        
+			socket.receive(receivePacket);
+			} catch (IOException e) {
+			   System.out.print("IO Exception: likely:");
+			   System.out.println("Receive Socket Timed Out.\n" + e);
+			   e.printStackTrace();
+			   System.exit(1);
+			}
+		    
+		    byte replyData[] = new byte[1];
+		    replyData[0] = (byte) scheduler.readMessage();
+		    sendPacket = new DatagramPacket(replyData, replyData.length, receivePacket.getAddress(), receivePacket.getPort());
+		    
+		    try {        
+			 socket.send(sendPacket);
+			 } catch (IOException e) {
+			    System.out.print("IO Exception: likely:");
+			    System.out.println("Receive Socket Timed Out.\n" + e);
+			    e.printStackTrace();
+			    System.exit(1);
+			 }
+		}
 	}
 	
 	private void passStateHandler(byte data[])
