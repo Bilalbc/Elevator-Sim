@@ -59,7 +59,7 @@ public class Elevator implements Runnable {
 				}
 
 				// Lets the scheduler know which floor it is on and its state
-				//scheduler.passState(currentFloor, currentState, assignedNum);
+				scheduler.passState(currentFloor, currentState, assignedNum);
 				Thread.sleep(1000);
 				// If the elevator has reached its destination or does not have one (0)
 				if (currentFloor == destination || destination == 0) {
@@ -78,7 +78,7 @@ public class Elevator implements Runnable {
 							&& scheduler.getElevatorQueueSize() == 0) {
 
 						// Pass state to ensure floor is not waiting forever
-						//scheduler.passState(currentFloor, currentState, assignedNum);
+						scheduler.passState(currentFloor, currentState, assignedNum);
 						scheduler.setClosed();
 					}
 				}
@@ -97,7 +97,6 @@ public class Elevator implements Runnable {
 					if (currentState.equals(ElevatorStates.MOVINGDOWN)) {
 						currentFloor--;
 					}
-
 				}
 			} catch (InterruptedException e) {
 				e.printStackTrace();
