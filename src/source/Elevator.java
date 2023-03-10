@@ -97,7 +97,6 @@ public class Elevator implements Runnable {
 					if (currentState.equals(ElevatorStates.MOVINGDOWN)) {
 						currentFloor--;
 					}
-
 				}
 			} catch (InterruptedException e) {
 				e.printStackTrace();
