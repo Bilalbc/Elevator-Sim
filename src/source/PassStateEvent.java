@@ -5,22 +5,12 @@ public class PassStateEvent {
 	private int currentFloor; 
 	private Elevator.ElevatorStates currentState;
 	private int assignedNum;
-	private boolean setClosed;
 	
 	public PassStateEvent(int currentFloor, Elevator.ElevatorStates currentState, int assignedNum)
 	{
 		this.currentFloor = currentFloor;
 		this.currentState = currentState;
 		this.assignedNum = assignedNum;
-		this.setClosed = false;
-	}
-	
-	public PassStateEvent(int currentFloor, Elevator.ElevatorStates currentState, int assignedNum, boolean setClosed)
-	{
-		this.currentFloor = currentFloor;
-		this.currentState = currentState;
-		this.assignedNum = assignedNum;
-		this.setClosed = setClosed;
 	}
 	
 	public int getCurrentFloor()
@@ -36,10 +26,5 @@ public class PassStateEvent {
 	public int getAssignedNum()
 	{
 		return this.assignedNum;
-	}
-	
-	public boolean getClosed()
-	{
-		return this.setClosed;
 	}
 }
