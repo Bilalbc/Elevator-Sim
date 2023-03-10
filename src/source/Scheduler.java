@@ -1,10 +1,10 @@
 /**
- * @Author: Mohamed Kaddour
+ * @Author: Mohamed Kaddour, Matthew Parker
 
- * @Date: 2023-02-27
- * @Version 2.0
+ * @Date: 2023-03-09
+ * @Version 3.0
  * 
- * As for Iteration2 and Version 2.0, Scheduler class acts as a sorter for the floors based off the requests received from the floor subsystem. 
+ * As for Iteration3 and Version 3.0, Scheduler class acts as a sorter for the floors based off the requests received from the floor subsystem. 
  * Once a message is received, it is added to the queue. It then adds the destination to the queue of a specific elevator thread. 
  * The scheduler also manages whether it would be efficient for a specific elevator (based on its number and current state) to take a certain 
  * request.
@@ -26,7 +26,6 @@ public class Scheduler {
 	public static final int ELEVATOR3 = 2;
 	public static final int ELEVATOR4 = 3;
 
-	/* For now, these will have a maximum size of 1 */
 	private ArrayList<Message> messageQueue;
 	private ArrayList<Message> replyQueue;
 	private ArrayList<Integer> elevatorFloors;
@@ -55,8 +54,6 @@ public class Scheduler {
 		this.elevatorStates = new ArrayList<>(Arrays.asList(Elevator.ElevatorStates.DOORSCLOSED,Elevator.ElevatorStates.DOORSCLOSED,Elevator.ElevatorStates.DOORSCLOSED,Elevator.ElevatorStates.DOORSCLOSED));
 		this.elevatorQueue = new HashMap<>();
 		this.elevatorQueue.put(ELEVATOR1, new ArrayList<Integer>());
-
-		//Added 3 New elevators to the Queue
 		this.elevatorQueue.put(ELEVATOR2, new ArrayList<Integer>());
 		this.elevatorQueue.put(ELEVATOR3, new ArrayList<Integer>());
 		this.elevatorQueue.put(ELEVATOR4, new ArrayList<Integer>());
@@ -66,8 +63,7 @@ public class Scheduler {
 
 	/**
 	 * Synchronized method that takes in a message and, if the scheduler is not in a
-	 * waiting state, adds the message to the queue. As of Iteration2, it is assumed
-	 * there is no maximum capacity to the messageQueue.
+	 * waiting state, adds the message to the queue.
 	 *
 	 * @param message of type Message to pass
 	 */
@@ -131,8 +127,7 @@ public class Scheduler {
 	 * Synchronized method that takes in the state of the Elevator and depending on
 	 * the current state and the current floor of the elevator, will determine
 	 * whether the request's floor can be added to the elevator queue to maximize
-	 * efficiency. As of Iteration2 there is only one elevator but elevatorNum will
-	 * be used to manage multiple.
+	 * efficiency.
 	 *
 	 * Forms a reply to be sent to the Floor class.
 	 * 
@@ -185,6 +180,8 @@ public class Scheduler {
 				}
 
 			}
+		
+		//If a elevator(s) is found to be able to take on request, checks for shortest distance from start floor
 		if(valid = true) {
 			int closestElevator = validElevators.get(0);
 			int shortestDistance = Math.abs(elevatorFloors.get(validElevators.get(0)) - startFloor);
