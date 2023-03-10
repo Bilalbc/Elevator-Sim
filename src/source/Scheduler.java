@@ -44,8 +44,8 @@ public class Scheduler {
 	private HashMap<Integer, ArrayList<Integer>> elevatorQueue;
 
 	/**
-	 * Constructor for class Scheduler. Initializes messageQueue, replyQueue and the
-	 * elevatorQueue for Elevator 1.
+	 * Constructor for class Scheduler. Initializes messageQueue, replyQueue, elevatorFloors, elevatorStates and the
+	 * elevatorQueue for all elevators.
 	 */
 	public Scheduler() {
 		this.messageQueue = new ArrayList<>();
