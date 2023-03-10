@@ -80,17 +80,13 @@ public class ElevatorHandler implements Runnable{
 	{
 	    ByteArrayInputStream bis = new ByteArrayInputStream(data);
 	    ObjectInput input = null;
-	    
-	    try {
-			input = new ObjectInputStream(bis);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	    
 	    Object o = null;
 	    
 		try {
+			input = new ObjectInputStream(bis);
 			o = input.readObject();
+			bis.close();
+			input.close();
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
