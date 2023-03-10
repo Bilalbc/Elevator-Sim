@@ -1,7 +1,17 @@
 package source;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.Scanner;
 
 /**
@@ -9,22 +19,27 @@ import java.util.Scanner;
  * scheduler
  * 
  * @author Kousha Motazedian, Matthew Parker
- * @version 2.0
- * @date February 27th, 2023
+ * @version 3.0
+ * @date March 9th, 2023
  */
 public class Floor implements Runnable {
-	private Scheduler scheduler;
 	private File floorRequests;
 	private int messageDelay = 0;
+	private DatagramSocket sendAndReceive;
 
 	/**
 	 * Constructor for Floor class
 	 * 
 	 * @param sch, Scheduler being used
 	 */
-	public Floor(Scheduler sch, File file) {
-		this.scheduler = sch;
+	public Floor(File file) {
 		this.floorRequests = file;
+		try {
+			this.sendAndReceive = new DatagramSocket();
+			sendAndReceive.setSoTimeout(10000);
+		} catch (SocketException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -70,6 +85,52 @@ public class Floor implements Runnable {
 		System.err.println("An incorrect request was recieved");
 		return false;
 	}
+	
+	/**
+	 * Send and gets messages through UDP
+	 * @param sendingMessage, either null or a Message Object, it is a message object when there is a message to be sent, null when you want to receive a message
+	 * @return Message or null, if you passed null, it will return a message. Otherwise it will return null.
+	 */
+	
+	private void sendAndGetMessage(Message sendingMessage, boolean send) {
+		DatagramPacket sending; //both packets
+		DatagramPacket receiving;
+		try {
+			if(send) {
+				ByteArrayOutputStream byteStream = new ByteArrayOutputStream(); //set up byte array streams to turn Message into a byte array
+				ObjectOutputStream objectStream = new ObjectOutputStream(byteStream);
+				objectStream.writeObject(sendingMessage);
+				objectStream.flush();
+				byte sendingData[] = byteStream.toByteArray();
+				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(), 42); //Send to floor handler
+				sendAndReceive.send(sending);
+				byte receivingData[] = new byte[1];
+				receiving = new DatagramPacket(receivingData, 1); //Get response back, should be only length 1
+				sendAndReceive.receive(receiving);
+				byteStream.close();
+				objectStream.close();
+			}
+			else {
+				byte sendingData[] = new byte[1];
+				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(), 42); //send void message to notify that I want a message
+				sendAndReceive.send(sending);
+				byte receivingData[] = new byte[50];
+				receiving = new DatagramPacket(receivingData, receivingData.length); //get message from handler
+				sendAndReceive.receive(receiving);
+				ByteArrayInputStream byteStream = new ByteArrayInputStream(receiving.getData()); //unpack into an object
+				ObjectInputStream objectStream = new ObjectInputStream(byteStream);
+				sendingMessage = (Message) objectStream.readObject();
+				byteStream.close();
+				objectStream.close();
+			}
+			
+		} catch (IOException | ClassNotFoundException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+		
+		
+	}
 
 	@Override
 	/**
@@ -80,7 +141,7 @@ public class Floor implements Runnable {
 	public void run() {
 		try {
 			Scanner reader = new Scanner(floorRequests);
-			while (!scheduler.isClosed()) {
+			while (true) {
 				if (reader.hasNextLine()) {
 
 					// if the delay to send the request has elapsed
@@ -88,7 +149,10 @@ public class Floor implements Runnable {
 						Message req = createRequest(reader);
 						if (req != null) { // if request was valid
 							System.out.println("Passing message: " + req);
-							scheduler.passMessage(req);
+							
+							sendAndGetMessage(req, true);
+							
+							
 						}
 					} 
 					else {
@@ -100,15 +164,24 @@ public class Floor implements Runnable {
 				} 
 				else {
 					// notify scheduler that there are no more requests to be sent
-					scheduler.setRequestsComplete(true);
+					Message done = new Message("done");
+					sendAndGetMessage(done, true);
+					reader.close();
 				}
-				Message returned = scheduler.readReply();
+				Message returned = new Message("");
+				sendAndGetMessage(returned, false);
 				System.out.println(returned.getReturnMessage());
 
 			}
-			reader.close();
 		} catch (FileNotFoundException | InterruptedException e) {
 			System.out.println("filenotfound");
 		}
+	}
+	
+	public static void main(String[] args) {
+		File file = new File("src//source//Requests.csv");
+		Thread f = new Thread(new Floor(file), "Floor");
+
+		f.start();
 	}
 }

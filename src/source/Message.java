@@ -1,12 +1,15 @@
 package source;
+
+import java.io.Serializable;
+
 /**
- * The message class stores information about requests inside to be sent between the floor and elevator.
+ * The message class stores information about requests inside to be sent between the floor and elevator. Implements Serializable.
  * @author Kousha Motazedian
- * @version 2.0
- * @date February 27th, 2023
+ * @version 3.0
+ * @date March 9th, 2023
  *
  */
-public class Message {
+public class Message implements Serializable{
 
 	private String time;
 	private String direction;
