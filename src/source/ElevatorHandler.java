@@ -1,11 +1,9 @@
 package source;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
@@ -51,18 +49,18 @@ public class ElevatorHandler implements Runnable{
 	    
 	    passStateHandler(data);
 	    
-	    byte replyData[] = this.serializeReply();
+	    byte replyData[] = new byte[1];
+	    replyData[0] = (byte) scheduler.readMessage();
 	    sendPacket = new DatagramPacket(replyData, replyData.length, receivePacket.getAddress(), receivePacket.getPort());
 	    
 	    try {        
-		 socket.receive(sendPacket);
+		 socket.send(sendPacket);
 		 } catch (IOException e) {
 		    System.out.print("IO Exception: likely:");
 		    System.out.println("Receive Socket Timed Out.\n" + e);
 		    e.printStackTrace();
 		    System.exit(1);
 		 }
-	    
 	}
 	
 	private void passStateHandler(byte data[])
@@ -89,29 +87,5 @@ public class ElevatorHandler implements Runnable{
 		PassStateEvent pse = (PassStateEvent) o;
 		
 	    scheduler.passState(pse);
-	    
-	    if (pse.getClosed())
-	    {
-	    	scheduler.setClosed();
-	    }
 	}
-	
-	private byte[] serializeReply()
-	{
-		ElevatorReturnEvent ere = new ElevatorReturnEvent(scheduler.readMessage(), scheduler.isRequestsComplete(), scheduler.getElevatorQueueSize());
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		ObjectOutputStream out = null;
-		
-		try {
-			out = new ObjectOutputStream(bos);
-			out.writeObject(ere);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		byte[] returnByte = bos.toByteArray();
-		
-		return returnByte;
-	}
-
 }
