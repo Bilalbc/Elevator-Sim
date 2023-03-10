@@ -13,7 +13,7 @@ public class ElevatorHandler implements Runnable{
 	private int elevatorPort;
 	private Scheduler scheduler;
 	private DatagramSocket socket;
-	private DatagramPacket sendPacket, receivePacket, sendPacketAck, receievePacketAck;
+	private DatagramPacket sendPacket, receivePacket, sendPacketAck;
 	
 	public static final int MAX_DATA_SIZE = 100;
 	public static final int TIMEOUT = 40000; //placeholder value for now
