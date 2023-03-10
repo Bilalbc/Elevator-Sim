@@ -136,7 +136,11 @@ public class Scheduler {
 	 *                      Elevator.ElevatorStates
 	 * @param elevatorNum,  the elevator number.
 	 */
-	public synchronized void passState(int currentFloor, Elevator.ElevatorStates elevatorState, int elevatorNum) {
+	public synchronized void passState(PassStateEvent pse) {
+		int currentFloor = pse.getCurrentFloor(); 
+		Elevator.ElevatorStates elevatorState = pse.getCurrentState(); 
+		int elevatorNum = pse.getAssignedNum();
+		
 		while (states != SchedulerStates.WAITING) { // If the scheduler is not in the WAITING state, thread must wait
 			// until it is
 			try {
