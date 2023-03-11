@@ -15,18 +15,18 @@ public class ElevatorHandler implements Runnable{
 	private DatagramSocket socket;
 	private DatagramPacket sendPacket, receivePacket, sendPacketAck;
 	
-	public static final int MAX_DATA_SIZE = 100;
+	public static final int MAX_DATA_SIZE = 250;
 	public static final int TIMEOUT = 40000; //placeholder value for now
 
 	
-	public ElevatorHandler(int elevatorPort, Scheduler scheduler)
+	public ElevatorHandler(Scheduler scheduler, int elevatorPort)
 	{
 		this.elevatorPort = elevatorPort;
 		this.scheduler = scheduler;
 
 	    try {
 	        socket = new DatagramSocket(this.elevatorPort);
-	        socket.setSoTimeout(TIMEOUT);
+	//        socket.setSoTimeout(TIMEOUT);
 	     } catch (SocketException se) {
 	        se.printStackTrace();
 	        System.exit(1);
@@ -77,8 +77,8 @@ public class ElevatorHandler implements Runnable{
 			   System.exit(1);
 			}
 		    
-		    byte replyData[] = new byte[1];
-		    replyData[0] = (byte) scheduler.readMessage();
+		    byte replyData[] = {(byte) scheduler.readMessage()};
+		    
 		    sendPacket = new DatagramPacket(replyData, replyData.length, receivePacket.getAddress(), receivePacket.getPort());
 		    
 		    try {        
@@ -111,6 +111,8 @@ public class ElevatorHandler implements Runnable{
 		
 		PassStateEvent pse = (PassStateEvent) o;
 		
+		System.out.println(pse);
 	    scheduler.passState(pse);
 	}
+
 }

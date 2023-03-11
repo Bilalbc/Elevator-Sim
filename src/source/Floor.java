@@ -36,7 +36,7 @@ public class Floor implements Runnable {
 		this.floorRequests = file;
 		try {
 			this.sendAndReceive = new DatagramSocket();
-			sendAndReceive.setSoTimeout(10000);
+		//	sendAndReceive.setSoTimeout(10000);
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
@@ -114,14 +114,14 @@ public class Floor implements Runnable {
 				byte sendingData[] = new byte[1];
 				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(), 42); //send void message to notify that I want a message
 				sendAndReceive.send(sending);
-				byte receivingData[] = new byte[50];
+				byte receivingData[] = new byte[250];
 				receiving = new DatagramPacket(receivingData, receivingData.length); //get message from handler
 				sendAndReceive.receive(receiving);
 				ByteArrayInputStream byteStream = new ByteArrayInputStream(receiving.getData()); //unpack into an object
 				ObjectInputStream objectStream = new ObjectInputStream(byteStream);
 				sendingMessage = (Message) objectStream.readObject();
 				byteStream.close();
-				objectStream.close();
+				objectStream.close();			
 			}
 			
 		} catch (IOException | ClassNotFoundException e) {
@@ -143,23 +143,11 @@ public class Floor implements Runnable {
 			Scanner reader = new Scanner(floorRequests);
 			while (true) {
 				if (reader.hasNextLine()) {
-
-					// if the delay to send the request has elapsed
-					if (messageDelay <= 0) {
-						Message req = createRequest(reader);
-						if (req != null) { // if request was valid
-							System.out.println("Passing message: " + req);
-							
-							sendAndGetMessage(req, true);
-							
-							
-						}
-					} 
-					else {
-						// delay by part of total delay to allow floor to continue to receive replies
-						// from the elevator
-						messageDelay -= 100;
-						Thread.sleep(100);
+					Message req = createRequest(reader);
+					if (req != null) { // if request was valid
+						System.out.println("Passing message: " + req);
+						
+						sendAndGetMessage(req, true);	
 					}
 				} 
 				else {
@@ -167,13 +155,14 @@ public class Floor implements Runnable {
 					Message done = new Message("done");
 					sendAndGetMessage(done, true);
 					reader.close();
+					break;
 				}
 				Message returned = new Message("");
 				sendAndGetMessage(returned, false);
 				System.out.println(returned.getReturnMessage());
 
 			}
-		} catch (FileNotFoundException | InterruptedException e) {
+		} catch (FileNotFoundException e) {
 			System.out.println("filenotfound");
 		}
 	}
