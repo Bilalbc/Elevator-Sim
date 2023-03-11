@@ -25,7 +25,7 @@ public class ElevatorHandler implements Runnable{
 	private DatagramPacket sendPacket, receivePacket;
 	private boolean send;
 	
-	public static final int MAX_DATA_SIZE = 100;
+	public static final int MAX_DATA_SIZE = 250;
 	public static final int TIMEOUT = 40000; //placeholder value for now
 
 	/**
@@ -34,7 +34,7 @@ public class ElevatorHandler implements Runnable{
 	 * @param scheduler, Scheduler to interact with
 	 * @param elevatorPort, of type int, the port to initialize the socket to. 
 	 * */
-	public ElevatorHandler(int elevatorPort, Scheduler scheduler)
+	public ElevatorHandler(Scheduler scheduler, int elevatorPort)
 	{
 		this.scheduler = scheduler;
 		this.send = true;
@@ -83,6 +83,7 @@ public class ElevatorHandler implements Runnable{
 		
 		PassStateEvent pse = (PassStateEvent) o;
 		
+		System.out.println(pse);
 	    scheduler.passState(pse);
 	}
 	
@@ -101,18 +102,12 @@ public class ElevatorHandler implements Runnable{
 		
 	    try {        
 	   	 socket.receive(receivePacket);
-	    } catch (IOException e) {
-	       System.out.print("IO Exception: likely:");
-	       System.out.println("Receive Socket Timed Out.\n" + e);
-	       e.printStackTrace();
-	       System.exit(1);
-	    }
 
 		if (send)
 		{	
 			//If send is true, then the replyData is the acknowledgment message, which is just a byte array of size 1. 
 			replyData = new byte[1];
-			replyData[0]= (byte) 7;
+			replyData[0]= (byte) 1;
 			
 		    passStateHandler(data);
 		    		    
@@ -129,8 +124,7 @@ public class ElevatorHandler implements Runnable{
 		
 		//Always send the packet at the end back for the reply. 
 	    sendPacket = new DatagramPacket(replyData, replyData.length, receivePacket.getAddress(), receivePacket.getPort());
-
-	    try {        
+     
 		socket.send(sendPacket);
 		} catch (IOException e) {
 		   System.out.print("IO Exception: likely:");

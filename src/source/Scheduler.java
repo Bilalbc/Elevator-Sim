@@ -107,7 +107,7 @@ public class Scheduler {
 				System.err.println(e);
 			}
 		}
-
+		
 		if (elevatorQueue.get(ELEVATOR1).size() == 0) { // IF THERE ARE NO NEW DESTINATIONS
 			return 0;
 		}
@@ -158,11 +158,16 @@ public class Scheduler {
 		states = SchedulerStates.RECEIVING; // Getting information
 		this.previousState = SchedulerStates.RECEIVING;
 		
+		if(this.messageQueue.size() == 0) {
+			states = SchedulerStates.WAITING;
+			return;
+		}
+		
 		int startFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).startFloor();
 		int destFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).destinationFloor();
 
 		ArrayList<Integer> validElevators = new ArrayList<>();
-		Boolean valid = false;
+		boolean valid = false;
 
 		if (messageQueue.size() != 0) // Logic to get destinations for elevator, check if there are messages available
 			// Get start and destination floor of the request
@@ -180,10 +185,8 @@ public class Scheduler {
 				if ((movingUp && startFloorAbove) || (movingDown && startFloorBelow) || (startFloorEquals)
 						|| (doorsClosed && elevatorQueue.get(i).isEmpty())) {
 					validElevators.add(i);
-					valid = true;
-					
+					valid = true;	
 				}
-
 			}
 		
 		//If a elevator(s) is found to be able to take on request, checks for shortest distance from start floor
@@ -197,8 +200,10 @@ public class Scheduler {
 					closestElevator = validElevators.get(i);
 				}
 			}
+			
 			this.elevatorQueue.get(closestElevator).add(startFloor);
 			this.elevatorQueue.get(closestElevator).add(destFloor);
+			
 			this.messageQueue.remove(MESSAGE_BUFFER_FIRST_INDEX);
 		}
 
@@ -309,5 +314,17 @@ public class Scheduler {
 	 */
 	public SchedulerStates getPreviousSchedulerState() {
 		return this.previousState;
+	}
+	
+	
+	
+	public static void main(String[] args) {
+		Scheduler sch = new Scheduler();
+		Thread fh = new Thread(new FloorHandler(sch));
+		Thread eh = new Thread(new ElevatorHandler(sch, 69)); 
+		
+		fh.start();
+		eh.start();
+		
 	}
 }

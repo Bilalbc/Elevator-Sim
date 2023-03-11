@@ -26,7 +26,7 @@ public class FloorHandler implements Runnable{
 	private DatagramPacket sendPacket, receivePacket;
 	private boolean send;
 	
-	public static final int MAX_DATA_SIZE = 100;
+	public static final int MAX_DATA_SIZE = 250;
 	public static final int TIMEOUT = 40000; //placeholder value for now
 	
 	public static final int FLOOR_HANDLER_PORT = 42;
@@ -69,17 +69,16 @@ public class FloorHandler implements Runnable{
 	private void passMessage(byte data[])
 	{
 	    ByteArrayInputStream bis = new ByteArrayInputStream(data);
-	    ObjectInput input = null;
+	    ObjectInputStream input = null;
 	    Object o = null;
 	    
 	    try {
 			input = new ObjectInputStream(bis);
+			
 			o = input.readObject();
 			input.close();
 			bis.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
+		} catch (ClassNotFoundException | IOException e) {
 			e.printStackTrace();
 		}
 				
@@ -106,7 +105,6 @@ public class FloorHandler implements Runnable{
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 		byte[] returnByte = bos.toByteArray();
 
 		return returnByte;
