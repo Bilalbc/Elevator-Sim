@@ -36,7 +36,7 @@ public class Floor implements Runnable {
 		this.floorRequests = file;
 		try {
 			this.sendAndReceive = new DatagramSocket();
-			sendAndReceive.setSoTimeout(10000);
+			//sendAndReceive.setSoTimeout(10000);
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
@@ -120,6 +120,7 @@ public class Floor implements Runnable {
 				ByteArrayInputStream byteStream = new ByteArrayInputStream(receiving.getData()); //unpack into an object
 				ObjectInputStream objectStream = new ObjectInputStream(byteStream);
 				sendingMessage = (Message) objectStream.readObject();
+				System.out.println("hello"+sendingMessage.getReturnMessage());
 				byteStream.close();
 				objectStream.close();			
 			}
@@ -160,7 +161,6 @@ public class Floor implements Runnable {
 				Message returned = new Message("");
 				sendAndGetMessage(returned, false);
 				System.out.println(returned.getReturnMessage());
-
 			}
 		} catch (FileNotFoundException e) {
 			System.out.println("filenotfound");

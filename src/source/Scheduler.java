@@ -207,7 +207,6 @@ public class Scheduler {
 			this.messageQueue.remove(MESSAGE_BUFFER_FIRST_INDEX);
 		}
 
-
 		// Add the return message of the elevator (current floor, state, and elevator
 		// number) for the floor to read
 		Message reply = new Message(

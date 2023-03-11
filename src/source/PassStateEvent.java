@@ -64,6 +64,6 @@ public class PassStateEvent implements Serializable{
 	
 	@Override
 	public String toString() {
-		return "Elevator " + assignedNum + " on Floor " + currentState + ", current state " + currentState;
+		return "Elevator " + assignedNum + " on Floor " + currentFloor + ", current state " + currentState;
 	}
 }

@@ -13,8 +13,8 @@ import java.net.SocketException;
 
 /**
  * @author Akshay V., Kousha Motazedian, Matthew Parker
- * @version 2.0
- * @date February 27th, 2023
+ * @Date: 2023-03-09
+ * @Version 3.0
  *
  *       An Elevator class that receives floor requests from the scheduler which
  *       indicates the order in which the elevator should pick up/drop off
@@ -44,7 +44,7 @@ public class Elevator implements Runnable {
 	public Elevator(int portNum, int assignedNum) {
 		try {
 			this.sendAndReceive = new DatagramSocket();
-			sendAndReceive.setSoTimeout(10000);
+			//sendAndReceive.setSoTimeout(10000);
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
@@ -84,6 +84,7 @@ public class Elevator implements Runnable {
 
 				if(receivingData[0] != 0) {
 					this.destination = receivingData[0]; // can maybe make this a parameter to the function and pass by refreence 
+					System.out.println("Elevator " + this.assignedNum + " New destination: " + destination);
 				}
 			}
 
@@ -124,6 +125,7 @@ public class Elevator implements Runnable {
 				// If the elevator has reached its destination or does not have one (0)
 				sendAndGetMessage(new PassStateEvent(currentFloor,currentState, assignedNum), false);
 				if (currentFloor == destination || destination == 0) {
+//					System.out.println(this.assignedNum + " Arrived at Destination "+ currentFloor);
 //					// If the new destination is not 0 (meaning no destinations left), the elevator
 //					// takes on the new destination
 //					if (newDestination != 0) {

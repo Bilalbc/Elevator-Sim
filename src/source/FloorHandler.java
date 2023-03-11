@@ -43,7 +43,7 @@ public class FloorHandler implements Runnable{
 
 	    try {
 	        socket = new DatagramSocket(FLOOR_HANDLER_PORT);
-	        socket.setSoTimeout(TIMEOUT);
+	        //socket.setSoTimeout(TIMEOUT);
 	     } catch (SocketException se) {
 	        se.printStackTrace();
 	        System.exit(1);
@@ -124,39 +124,32 @@ public class FloorHandler implements Runnable{
 		receivePacket = new DatagramPacket(data, data.length);
 		
 	    try {        
-	   	 socket.receive(receivePacket);
-	    } catch (IOException e) {
-	       System.out.print("IO Exception: likely:");
-	       System.out.println("Receive Socket Timed Out.\n" + e);
-	       e.printStackTrace();
-	       System.exit(1);
-	    }
-
-		if (send)
-		{	
-			//If send is true, then the replyData is the acknowledgment message, which is just a byte array of size 1. 
-			replyData = new byte[1];
-			replyData[0]= (byte) 1;
+		   	socket.receive(receivePacket);
+	
+			if (send)
+			{	
+				//If send is true, then the replyData is the acknowledgment message, which is just a byte array of size 1. 
+				replyData = new byte[1];
+				replyData[0]= (byte) 1;
+				
+				//Handle the passMessage 
+				passMessage(data);
+			    		    
+			    this.send = false;
+			}
+			else
+			{
+				//If send is false, then the reply is the actual reply from the scheduler, thus serialize reply.
+			    replyData = new byte[ElevatorHandler.MAX_DATA_SIZE];
+			    replyData = serializeReply();
+			    		    
+			    this.send = true;
+			}
 			
-			//Handle the passMessage 
-			passMessage(data);
-		    		    
-		    this.send = false;
-		}
-		else
-		{
-			//If send is false, then the reply is the actual reply from the scheduler, thus serialize reply.
-		    replyData = new byte[ElevatorHandler.MAX_DATA_SIZE];
-		    replyData = serializeReply();
-		    		    
-		    this.send = true;
-		}
-		
-		//Always send the packet at the end back for the reply. 
-	    sendPacket = new DatagramPacket(replyData, replyData.length, receivePacket.getAddress(), receivePacket.getPort());
-
-	    try {        
-		socket.send(sendPacket);
+			//Always send the packet at the end back for the reply. 
+		    sendPacket = new DatagramPacket(replyData, replyData.length, receivePacket.getAddress(), receivePacket.getPort());
+	   
+			socket.send(sendPacket);
 		} catch (IOException e) {
 		   System.out.print("IO Exception: likely:");
 		   System.out.println("Receive Socket Timed Out.\n" + e);
