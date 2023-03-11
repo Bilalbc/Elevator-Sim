@@ -43,7 +43,7 @@ public class FloorHandler implements Runnable{
 
 	    try {
 	        socket = new DatagramSocket(FLOOR_HANDLER_PORT);
-	        //socket.setSoTimeout(TIMEOUT);
+	        socket.setSoTimeout(TIMEOUT);
 	     } catch (SocketException se) {
 	        se.printStackTrace();
 	        System.exit(1);
@@ -55,7 +55,6 @@ public class FloorHandler implements Runnable{
 	 * */
 	@Override
 	public void run() {
-		
 		while (true)
 		{
 			sendAndReceieve();
@@ -81,8 +80,12 @@ public class FloorHandler implements Runnable{
 		} catch (ClassNotFoundException | IOException e) {
 			e.printStackTrace();
 		}
-				
-	    scheduler.passMessage((Message) o);
+	    if((((Message) o).getReturnMessage() != null) && ((Message) o).getReturnMessage().equals("done")) {
+	    	scheduler.setRequestsComplete(true);
+	    } 
+	    else {
+	    	scheduler.passMessage((Message) o);	    	
+	    }
 	}
 	
 	/**

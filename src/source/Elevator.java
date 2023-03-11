@@ -44,7 +44,7 @@ public class Elevator implements Runnable {
 	public Elevator(int portNum, int assignedNum) {
 		try {
 			this.sendAndReceive = new DatagramSocket();
-			//sendAndReceive.setSoTimeout(10000);
+			sendAndReceive.setSoTimeout(10000);
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
@@ -63,14 +63,18 @@ public class Elevator implements Runnable {
 			if(send) {
 				ByteArrayOutputStream byteStream = new ByteArrayOutputStream(); //set up byte array streams to turn Message into a byte array
 				ObjectOutputStream objectStream = new ObjectOutputStream(byteStream);
+				
 				objectStream.writeObject(pse);
 				objectStream.flush();
+				
 				byte sendingData[] = byteStream.toByteArray();
 				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(), handlerPort); //Send to floor handler
 				sendAndReceive.send(sending);
+				
 				byte receivingData[] = new byte[1];
 				receiving = new DatagramPacket(receivingData, 1); //Get response back, should be only length 1
 				sendAndReceive.receive(receiving);
+				
 				byteStream.close();
 				objectStream.close();
 			}
@@ -78,6 +82,7 @@ public class Elevator implements Runnable {
 				byte sendingData[] = new byte[1];
 				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(), handlerPort); //send void message to notify that I want a message
 				sendAndReceive.send(sending);
+				
 				byte receivingData[] = new byte[50];
 				receiving = new DatagramPacket(receivingData, receivingData.length); //get message from handler
 				sendAndReceive.receive(receiving);
@@ -89,7 +94,6 @@ public class Elevator implements Runnable {
 			}
 
 		} catch (IOException e) {
-			e.printStackTrace();
 			System.exit(1);
 		}
 
@@ -124,27 +128,6 @@ public class Elevator implements Runnable {
 				Thread.sleep(1000);
 				// If the elevator has reached its destination or does not have one (0)
 				sendAndGetMessage(new PassStateEvent(currentFloor,currentState, assignedNum), false);
-				if (currentFloor == destination || destination == 0) {
-//					System.out.println(this.assignedNum + " Arrived at Destination "+ currentFloor);
-//					// If the new destination is not 0 (meaning no destinations left), the elevator
-//					// takes on the new destination
-//					if (newDestination != 0) {
-//						destination = newDestination;
-//					}
-					/*
-					 
-					// If the destination still has not changed (because readMessage returned 0),
-					// floor is not sending anymore requests, and the scheduler is holding no more
-					// requests for the elevator, close the system.
-					if (currentFloor == destination && scheduler.isRequestsComplete()
-							&& scheduler.getElevatorQueueSize() == 0) {
-
-						// Pass state to ensure floor is not waiting forever
-						scheduler.passState(currentFloor, currentState, assignedNum);
-						scheduler.setClosed();
-					}
-					*/
-				}
 
 				if (destination != 0) {
 					if (destination > currentFloor) { // check if the elevator needs to move up or down
@@ -152,7 +135,6 @@ public class Elevator implements Runnable {
 					} else if (destination < currentFloor) {
 						currentState = ElevatorStates.MOVINGDOWN;
 					}
-
 					Thread.sleep(1000);
 					if (currentState.equals(ElevatorStates.MOVINGUP)) {
 						currentFloor++;
@@ -198,9 +180,15 @@ public class Elevator implements Runnable {
 	
 	public static void main(String[] args) {
 		
-		Thread evt = new Thread(new Elevator(69, 1));
+		Thread e1 = new Thread(new Elevator (69, 1), "0");
+		Thread e2 = new Thread(new Elevator (70, 2), "1");
+		Thread e3 = new Thread(new Elevator (71, 3), "2");
+		Thread e4 = new Thread(new Elevator (72, 4), "3");
 		
-		evt.start();
+		e1.start();
+		e2.start();
+		e3.start();
+		e4.start();
 	}
 
 }

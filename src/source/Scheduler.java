@@ -20,7 +20,7 @@ public class Scheduler {
 	
 	public static final int REPLY_BUFFER_SIZE = 1;
 	public static final int MESSAGE_BUFFER_FIRST_INDEX = 0;
-	public static final int BUFFER_EMPTY = 0;
+	public static final int REPLY_BUFFER_FIRST_INDEX = 0;
 
 	public static final int ELEVATOR1 = 0;
 	public static final int ELEVATOR2 = 1;
@@ -108,14 +108,16 @@ public class Scheduler {
 			}
 		}
 		
-		if (elevatorQueue.get(ELEVATOR1).size() == 0) { // IF THERE ARE NO NEW DESTINATIONS
+		int elevatorThreadNum = Integer.parseInt(Thread.currentThread().getName());
+		
+		if (elevatorQueue.get(elevatorThreadNum).size() == 0) { // IF THERE ARE NO NEW DESTINATIONS
 			return 0;
 		}
 
 		this.states = SchedulerStates.SENDING; // SENDING INFORMATIO
 
-		int reply = this.elevatorQueue.get(ELEVATOR1).get(0); // Get the next destination and give it to the elevator
-		this.elevatorQueue.get(ELEVATOR1).remove(0); // Remove the destination
+		int reply = this.elevatorQueue.get(elevatorThreadNum).get(0); // Get the next destination and give it to the elevator
+		this.elevatorQueue.get(elevatorThreadNum).remove(0); // Remove the destination
 
 		this.states = SchedulerStates.WAITING; // back to WAITING
 		this.previousState = SchedulerStates.SENDING;
@@ -142,6 +144,9 @@ public class Scheduler {
 		Elevator.ElevatorStates elevatorState = pse.getCurrentState(); 
 		int elevatorNum = pse.getAssignedNum();
 		
+		int startFloor = 0;
+		int destFloor = 0;
+		
 		while (states != SchedulerStates.WAITING) { // If the scheduler is not in the WAITING state, thread must wait
 			// until it is
 			try {
@@ -157,20 +162,15 @@ public class Scheduler {
 
 		states = SchedulerStates.RECEIVING; // Getting information
 		this.previousState = SchedulerStates.RECEIVING;
-		
-		if(this.messageQueue.size() == 0) {
-			states = SchedulerStates.WAITING;
-			return;
-		}
-		
-		int startFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).startFloor();
-		int destFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).destinationFloor();
 
 		ArrayList<Integer> validElevators = new ArrayList<>();
 		boolean valid = false;
 
-		if (messageQueue.size() != 0) // Logic to get destinations for elevator, check if there are messages available
+		if (messageQueue.size() != 0) { // Logic to get destinations for elevator, check if there are messages available
 			// Get start and destination floor of the request
+			
+			startFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).startFloor();
+			destFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).destinationFloor();
 			for (int i : elevatorQueue.keySet()) {
 
 				// Checks for logic
@@ -188,14 +188,19 @@ public class Scheduler {
 					valid = true;	
 				}
 			}
+		}
 		
-		//If a elevator(s) is found to be able to take on request, checks for shortest distance from start floor
-		if(valid = true) {
+		//If an elevator(s) is found to be able to take on request, checks for shortest distance from start floor
+		if(valid == true) {
 			int closestElevator = validElevators.get(0);
 			int shortestDistance = Math.abs(elevatorFloors.get(validElevators.get(0)) - startFloor);
 			for(int i = 0; i < validElevators.size(); i++) {
 				int floorDistance = Math.abs(elevatorFloors.get(validElevators.get(i)) - startFloor);
-				if(shortestDistance > floorDistance){
+				if(elevatorQueue.get(validElevators.get(i)).isEmpty()) {
+					closestElevator = validElevators.get(i);
+					break;
+				}
+				else if(shortestDistance > floorDistance){
 					shortestDistance = floorDistance;
 					closestElevator = validElevators.get(i);
 				}
@@ -211,11 +216,38 @@ public class Scheduler {
 		// number) for the floor to read
 		Message reply = new Message(
 				"Elevator " + elevatorNum + ": is on floor " + currentFloor + " and is " + elevatorState);
+		
 		this.replyQueue.add(reply);
-
 		this.states = SchedulerStates.WAITING;
 
+		if(checkFinished()) {
+			System.exit(0);
+		}
+		
 		notifyAll();
+	}
+	
+	private boolean checkFinished() {
+		boolean elevatorsComplete = true;
+		boolean elevatorStatesClosed = true;
+		
+		for(Elevator.ElevatorStates i : elevatorStates) {
+			if(!(i == Elevator.ElevatorStates.DOORSCLOSED)){
+				elevatorStatesClosed = false;
+			}
+		}
+		
+		for(ArrayList<Integer> i : elevatorQueue.values()) {
+			if(i.size() > 0) {
+				elevatorsComplete = false;
+			}
+		}
+		
+		if(this.requestsComplete && elevatorStatesClosed && elevatorsComplete) {
+			return true;
+		}
+		return false;
+		
 	}
 
 	/**
@@ -240,14 +272,13 @@ public class Scheduler {
 
 		states = SchedulerStates.SENDING; // SENDING INFO
 
-		reply = this.replyQueue.get(BUFFER_EMPTY); // Get the request
-		this.replyQueue.clear(); // empty Queue
+		reply = this.replyQueue.get(REPLY_BUFFER_FIRST_INDEX); // Get the request
+		this.replyQueue.remove(REPLY_BUFFER_FIRST_INDEX); // empty Queue
 
 		states = SchedulerStates.WAITING; // WAITING
 
 		notifyAll();
 
-		this.states = SchedulerStates.WAITING;
 		this.previousState = SchedulerStates.SENDING;
 		return reply;
 	}
@@ -318,12 +349,20 @@ public class Scheduler {
 	
 	
 	public static void main(String[] args) {
-		Scheduler sch = new Scheduler();
-		Thread fh = new Thread(new FloorHandler(sch));
-		Thread eh = new Thread(new ElevatorHandler(sch, 69)); 
+		Scheduler s = new Scheduler();
+		Thread fh = new Thread(new FloorHandler(s));
+		
+
+		Thread eh1 = new Thread(new ElevatorHandler(s, 69), "0");
+		Thread eh2 = new Thread(new ElevatorHandler(s, 70), "1");
+		Thread eh3 = new Thread(new ElevatorHandler(s, 71), "2");
+		Thread eh4 = new Thread(new ElevatorHandler(s, 72), "3");
 		
 		fh.start();
-		eh.start();
+		eh1.start();
+		eh2.start();
+		eh3.start();
+		eh4.start();
 		
 	}
 }
