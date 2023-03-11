@@ -27,7 +27,7 @@ public class FloorHandler implements Runnable{
 
 	    try {
 	        socket = new DatagramSocket(FLOOR_HANDLER_PORT);
-	//        socket.setSoTimeout(TIMEOUT);
+	        socket.setSoTimeout(TIMEOUT);
 	     } catch (SocketException se) {
 	        se.printStackTrace();
 	        System.exit(1);
@@ -42,7 +42,7 @@ public class FloorHandler implements Runnable{
 			byte data[] = new byte[MAX_DATA_SIZE];
 			receivePacket = new DatagramPacket(data, data.length);
 			byte ack[] = new byte[1];
-			ack[0]= (byte) 2;
+			ack[0]= (byte) 1;
 	
 		    try {        
 		   	 socket.receive(receivePacket);
