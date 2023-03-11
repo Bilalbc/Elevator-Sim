@@ -1,6 +1,8 @@
 package source;
 
-public class PassStateEvent {
+import java.io.Serializable;
+
+public class PassStateEvent implements Serializable {
 	
 	private int currentFloor; 
 	private Elevator.ElevatorStates currentState;
