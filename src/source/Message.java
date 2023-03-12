@@ -11,6 +11,8 @@ import java.io.Serializable;
  */
 public class Message implements Serializable{
 
+	private static final long serialVersionUID = 6878979521805641286L;
+	
 	private String time;
 	private String direction;
 	private int startFloor;
@@ -110,10 +112,12 @@ public class Message implements Serializable{
 		
 		Message dupe = (Message) msg;
 		
-		return ((this.startFloor == dupe.startFloor) &&
+		return (((this.startFloor == dupe.startFloor) &&
 				(this.destinationFloor == dupe.destinationFloor) &&
 				(this.direction.equals(dupe.direction)) &&
-				(this.time.equals(dupe.time)));
+				(this.time.equals(dupe.time)))
+				|| 
+				(this.returnMessage.equals(dupe.returnMessage)));
 	}
 	
 }

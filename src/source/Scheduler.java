@@ -9,6 +9,7 @@
  * The scheduler also manages whether it would be efficient for a specific elevator (based on its number and current state) to take a certain 
  * request.
  */
+
 package source;
 
 import java.util.ArrayList;
@@ -16,10 +17,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 public class Scheduler {
-	
+
 	public static final int REPLY_BUFFER_SIZE = 1;
 	public static final int MESSAGE_BUFFER_FIRST_INDEX = 0;
-	public static final int BUFFER_EMPTY = 0;
+	public static final int REPLY_BUFFER_FIRST_INDEX = 0;
 
 	public static final int ELEVATOR1 = 0;
 	public static final int ELEVATOR2 = 1;
@@ -37,21 +38,23 @@ public class Scheduler {
 	public static enum SchedulerStates {
 		WAITING, RECEIVING, FAILURE, SENDING
 	};
-	
+
 	private SchedulerStates states;
 	private SchedulerStates previousState; // for testing purposes
 
 	private HashMap<Integer, ArrayList<Integer>> elevatorQueue;
 
 	/**
-	 * Constructor for class Scheduler. Initializes messageQueue, replyQueue, elevatorFloors, elevatorStates and the
-	 * elevatorQueue for all elevators.
+	 * Constructor for class Scheduler. Initializes messageQueue, replyQueue,
+	 * elevatorFloors, elevatorStates and the elevatorQueue for all elevators.
 	 */
 	public Scheduler() {
 		this.messageQueue = new ArrayList<>();
 		this.replyQueue = new ArrayList<>();
-		this.elevatorFloors = new ArrayList<>(Arrays.asList(0,0,0,0));
-		this.elevatorStates = new ArrayList<>(Arrays.asList(Elevator.ElevatorStates.DOORSCLOSED,Elevator.ElevatorStates.DOORSCLOSED,Elevator.ElevatorStates.DOORSCLOSED,Elevator.ElevatorStates.DOORSCLOSED));
+		this.elevatorFloors = new ArrayList<>(Arrays.asList(0, 0, 0, 0));
+		this.elevatorStates = new ArrayList<>(
+				Arrays.asList(Elevator.ElevatorStates.DOORSCLOSED, Elevator.ElevatorStates.DOORSCLOSED,
+						Elevator.ElevatorStates.DOORSCLOSED, Elevator.ElevatorStates.DOORSCLOSED));
 		this.elevatorQueue = new HashMap<>();
 		this.elevatorQueue.put(ELEVATOR1, new ArrayList<Integer>());
 		this.elevatorQueue.put(ELEVATOR2, new ArrayList<Integer>());
@@ -97,9 +100,8 @@ public class Scheduler {
 	 */
 	public synchronized int readMessage() {
 
-		// If the scheduler is not in the WAITING state, thread must wait	until it is
-		while (states != SchedulerStates.WAITING) 
-		{
+		// If the scheduler is not in the WAITING state, thread must wait until it is
+		while (states != SchedulerStates.WAITING) {
 			try {
 				wait();
 			} catch (InterruptedException e) {
@@ -107,14 +109,17 @@ public class Scheduler {
 			}
 		}
 
-		if (elevatorQueue.get(ELEVATOR1).size() == 0) { // IF THERE ARE NO NEW DESTINATIONS
+		int elevatorThreadNum = Integer.parseInt(Thread.currentThread().getName());
+
+		if (elevatorQueue.get(elevatorThreadNum).size() == 0) { // IF THERE ARE NO NEW DESTINATIONS
 			return 0;
 		}
 
 		this.states = SchedulerStates.SENDING; // SENDING INFORMATIO
 
-		int reply = this.elevatorQueue.get(ELEVATOR1).get(0); // Get the next destination and give it to the elevator
-		this.elevatorQueue.get(ELEVATOR1).remove(0); // Remove the destination
+		int reply = this.elevatorQueue.get(elevatorThreadNum).get(0); // Get the next destination and give it to the
+																		// elevator
+		this.elevatorQueue.get(elevatorThreadNum).remove(0); // Remove the destination
 
 		this.states = SchedulerStates.WAITING; // back to WAITING
 		this.previousState = SchedulerStates.SENDING;
@@ -137,10 +142,10 @@ public class Scheduler {
 	 * @param elevatorNum,  the elevator number.
 	 */
 	public synchronized void passState(PassStateEvent pse) {
-		int currentFloor = pse.getCurrentFloor(); 
-		Elevator.ElevatorStates elevatorState = pse.getCurrentState(); 
+		int currentFloor = pse.getCurrentFloor();
+		Elevator.ElevatorStates elevatorState = pse.getCurrentState();
 		int elevatorNum = pse.getAssignedNum();
-		
+
 		while (states != SchedulerStates.WAITING) { // If the scheduler is not in the WAITING state, thread must wait
 			// until it is
 			try {
@@ -150,21 +155,46 @@ public class Scheduler {
 			}
 		}
 
-		//Update current floor and current state of called elevator
-		elevatorFloors.set(elevatorNum-1, currentFloor);
-		elevatorStates.set(elevatorNum-1, elevatorState);
+		// Update current floor and current state of called elevator
+		elevatorFloors.set(elevatorNum - 1, currentFloor);
+		elevatorStates.set(elevatorNum - 1, elevatorState);
 
 		states = SchedulerStates.RECEIVING; // Getting information
 		this.previousState = SchedulerStates.RECEIVING;
-		
-		int startFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).startFloor();
-		int destFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).destinationFloor();
 
+		schedulerAlgorithm();
+
+		// Add the return message of the elevator (current floor, state, and elevator
+		// number) for the floor to read
+		Message reply = new Message(
+				"Elevator " + elevatorNum + ": is on floor " + currentFloor + " and is " + elevatorState);
+
+		this.replyQueue.add(reply);
+		this.states = SchedulerStates.WAITING;
+
+		if (checkFinished()) {
+			System.exit(0);
+		}
+
+		notifyAll();
+	}
+
+	/**
+	 * Method containing the algorithm to efficiently distribute incoming requests
+	 * among the active elevators
+	 */
+	public void schedulerAlgorithm() {
 		ArrayList<Integer> validElevators = new ArrayList<>();
-		Boolean valid = false;
+		boolean valid = false;
 
-		if (messageQueue.size() != 0) // Logic to get destinations for elevator, check if there are messages available
+		int startFloor = 0;
+		int destFloor = 0;
+
+		if (messageQueue.size() != 0) { // Logic to get destinations for elevator, check if there are messages available
 			// Get start and destination floor of the request
+
+			startFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).startFloor();
+			destFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).destinationFloor();
 			for (int i : elevatorQueue.keySet()) {
 
 				// Checks for logic
@@ -180,37 +210,63 @@ public class Scheduler {
 						|| (doorsClosed && elevatorQueue.get(i).isEmpty())) {
 					validElevators.add(i);
 					valid = true;
-					
 				}
-
 			}
-		
-		//If a elevator(s) is found to be able to take on request, checks for shortest distance from start floor
-		if(valid = true) {
+		}
+
+		// If an elevator(s) is found to be able to take on request, checks for shortest
+		// distance from start floor
+		if (valid == true) {
 			int closestElevator = validElevators.get(0);
 			int shortestDistance = Math.abs(elevatorFloors.get(validElevators.get(0)) - startFloor);
-			for(int i = 0; i < validElevators.size(); i++) {
+			for (int i = 0; i < validElevators.size(); i++) {
 				int floorDistance = Math.abs(elevatorFloors.get(validElevators.get(i)) - startFloor);
-				if(shortestDistance > floorDistance){
+				if (elevatorQueue.get(validElevators.get(i)).isEmpty()) {
+					closestElevator = validElevators.get(i);
+					break;
+				} else if (shortestDistance > floorDistance) {
 					shortestDistance = floorDistance;
 					closestElevator = validElevators.get(i);
 				}
 			}
+
 			this.elevatorQueue.get(closestElevator).add(startFloor);
 			this.elevatorQueue.get(closestElevator).add(destFloor);
+
 			this.messageQueue.remove(MESSAGE_BUFFER_FIRST_INDEX);
 		}
+	}
 
+	/**
+	 * Helper method to determine whether the program is complete. 
+	 * 
+	 * checks if: 	All the elevators are DOORSCLOSED
+	 * 				All the elevator requests have been handled 
+	 * 				The Floor has notified the requests are complete
+	 * 
+	 * @return boolean : Whether the program is complete or not 
+	 */
+	private boolean checkFinished() {
+		boolean elevatorsComplete = true;
+		boolean elevatorStatesClosed = true;
 
-		// Add the return message of the elevator (current floor, state, and elevator
-		// number) for the floor to read
-		Message reply = new Message(
-				"Elevator " + elevatorNum + ": is on floor " + currentFloor + " and is " + elevatorState);
-		this.replyQueue.add(reply);
+		for (Elevator.ElevatorStates i : elevatorStates) {
+			if (!(i == Elevator.ElevatorStates.DOORSCLOSED)) {
+				elevatorStatesClosed = false;
+			}
+		}
 
-		this.states = SchedulerStates.WAITING;
+		for (ArrayList<Integer> i : elevatorQueue.values()) {
+			if (i.size() > 0) {
+				elevatorsComplete = false;
+			}
+		}
 
-		notifyAll();
+		if (this.requestsComplete && elevatorStatesClosed && elevatorsComplete) {
+			return true;
+		}
+		return false;
+
 	}
 
 	/**
@@ -235,14 +291,13 @@ public class Scheduler {
 
 		states = SchedulerStates.SENDING; // SENDING INFO
 
-		reply = this.replyQueue.get(BUFFER_EMPTY); // Get the request
-		this.replyQueue.clear(); // empty Queue
+		reply = this.replyQueue.get(REPLY_BUFFER_FIRST_INDEX); // Get the request
+		this.replyQueue.remove(REPLY_BUFFER_FIRST_INDEX); // empty Queue
 
 		states = SchedulerStates.WAITING; // WAITING
 
 		notifyAll();
 
-		this.states = SchedulerStates.WAITING;
 		this.previousState = SchedulerStates.SENDING;
 		return reply;
 	}
@@ -308,5 +363,49 @@ public class Scheduler {
 	 */
 	public SchedulerStates getPreviousSchedulerState() {
 		return this.previousState;
+	}
+
+	/**
+	 * Getter method for the messageQueue ArrayList for testing purposes
+	 * 
+	 * @return ArrayList<Message> : currently stored messages
+	 */
+	public ArrayList<Message> getMessages() {
+		return this.messageQueue;
+	}
+
+	/**
+	 * Getter method for the replyQueue ArrayList for testing purposes
+	 * 
+	 * @return ArrayList<Message> : currently stored replies
+	 */
+	public ArrayList<Message> getReplies() {
+		return this.replyQueue;
+	}
+
+	/**
+	 * Getter method for the elevatorQueue Map for testing purposes
+	 * 
+	 * @return HashMap<Integer, ArrayList<Integer>> : Elevators and prepared Queues
+	 */
+	public HashMap<Integer, ArrayList<Integer>> getElevatorQueue() {
+		return this.elevatorQueue;
+	}
+
+	public static void main(String[] args) {
+		Scheduler s = new Scheduler();
+		Thread fh = new Thread(new FloorHandler(s));
+
+		Thread eh1 = new Thread(new ElevatorHandler(s, 69), "0");
+		Thread eh2 = new Thread(new ElevatorHandler(s, 70), "1");
+		Thread eh3 = new Thread(new ElevatorHandler(s, 71), "2");
+		Thread eh4 = new Thread(new ElevatorHandler(s, 72), "3");
+
+		fh.start();
+		eh1.start();
+		eh2.start();
+		eh3.start();
+		eh4.start();
+
 	}
 }
