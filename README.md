@@ -33,13 +33,13 @@ Elevator/ElevatorHandler threads.
 **testData.csv ->** Data used for testing the functionality of the Floor, Scheduler, and Elevator.
 
 ## How to run
-To run the code, make sure that all files are present and are in the right spots. The code overview above tells you which classes should be where. (Requests.csv) should be in the source package. Run Main.java to start the program, as it contains the main method.
+To run the code, make sure that all files are present and are in the right spots. The code overview above tells you which classes should be where. (Requests.csv) should be in the source package. Run Scheduler.java, Elevator.java and Scheduler.java - in that order. 
 
 ## Contributions
 Everyone contributed to the design and planning of the program.
 
 **Sequence Diagram:** Mohamed Kaddour
-**Class Diagram:** Bilal Chaudhry
+**Class Diagram:** Akshay Vashisht, Bilal Chaudhry
 **State Diagram** Kousha Motazedian 
 **JUnit Testing:** Bilal Chaudhry
 **Message.java:** Kousha Motazedian
