@@ -19,7 +19,7 @@ The elevator has states for when the doors have opened or closed, when the eleva
 
 **Main.java ->** Includes the main method used to start the simulation.
 
-## Sequence Diagram:
+### Sequence Diagram:
 
 Only one Elevator/ElevatorHandler thread shown in the sequence digram. This was done to demonstrate the system's modifiability. The system can sustain 1 to X number of
 Elevator/ElevatorHandler threads.
