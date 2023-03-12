@@ -88,8 +88,7 @@ public class Elevator implements Runnable {
 				sendAndReceive.receive(receiving);
 
 				if(receivingData[0] != 0) {
-					this.destination = receivingData[0]; // can maybe make this a parameter to the function and pass by refreence 
-					System.out.println("Elevator " + this.assignedNum + " New destination: " + destination);
+					this.destination = receivingData[0]; // can maybe make this a parameter to the function and pass by refrence 
 				}
 			}
 
@@ -111,6 +110,12 @@ public class Elevator implements Runnable {
 	
 		while(true) {
 			try {
+				// Lets the scheduler know which floor it is on and its state
+				sendAndGetMessage(new PassStateEvent(currentFloor,currentState, assignedNum), true);
+				Thread.sleep(2000);
+				// If the elevator has reached its destination or does not have one(0)
+				sendAndGetMessage(new PassStateEvent(currentFloor,currentState, assignedNum), false);
+				
 				if (destination == currentFloor && currentState != ElevatorStates.DOORSCLOSED) {
 					currentState = ElevatorStates.STOPPED;
 					Thread.sleep(1000);
@@ -122,12 +127,6 @@ public class Elevator implements Runnable {
 					Thread.sleep(1000);
 					this.currentState = ElevatorStates.DOORSCLOSED; // Set to doors closed
 				}
-
-				// Lets the scheduler know which floor it is on and its state
-				sendAndGetMessage(new PassStateEvent(currentFloor,currentState, assignedNum), true);
-				Thread.sleep(1000);
-				// If the elevator has reached its destination or does not have one (0)
-				sendAndGetMessage(new PassStateEvent(currentFloor,currentState, assignedNum), false);
 
 				if (destination != 0) {
 					if (destination > currentFloor) { // check if the elevator needs to move up or down

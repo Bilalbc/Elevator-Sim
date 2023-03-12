@@ -26,7 +26,8 @@ public class Floor implements Runnable {
 	private File floorRequests;
 	private int messageDelay = 0;
 	private DatagramSocket sendAndReceive;
-	Scanner reader;
+	
+	private Scanner reader;
 
 	/**
 	 * Constructor for Floor class
@@ -105,7 +106,7 @@ public class Floor implements Runnable {
 				objectStream.flush();
 				
 				byte sendingData[] = byteStream.toByteArray();
-				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(), 42); //Send to floor handler
+				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(), FloorHandler.FLOOR_HANDLER_PORT); //Send to floor handler
 				sendAndReceive.send(sending);
 				
 				byte receivingData[] = new byte[1];
@@ -117,10 +118,10 @@ public class Floor implements Runnable {
 			}
 			else {
 				byte sendingData[] = new byte[1];
-				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(), 42); //send void message to notify that I want a message
+				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(), FloorHandler.FLOOR_HANDLER_PORT); //send void message to notify that I want a message
 				sendAndReceive.send(sending);
 				
-				byte receivingData[] = new byte[250];
+				byte receivingData[] = new byte[FloorHandler.MAX_DATA_SIZE];
 				receiving = new DatagramPacket(receivingData, receivingData.length); //get message from handler
 				sendAndReceive.receive(receiving);
 				
