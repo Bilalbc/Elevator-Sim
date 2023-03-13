@@ -58,47 +58,38 @@ public class Elevator implements Runnable {
 
 		try {
 			if (send) {
-				ByteArrayOutputStream byteStream = new ByteArrayOutputStream(); // set up byte array streams to turn
-																				// Message into a byte array
+				// Set up byte array streams to turn Message into a byte array
+				ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
 				ObjectOutputStream objectStream = new ObjectOutputStream(byteStream);
 
 				objectStream.writeObject(pse);
 				objectStream.flush();
 
 				byte sendingData[] = byteStream.toByteArray();
-				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(), handlerPort); // Send
-																														// to
-																														// floor
-																														// handler
+				// Send to floor handler
+				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(), handlerPort);
 				sendAndReceive.send(sending);
 
 				byte receivingData[] = new byte[1];
-				receiving = new DatagramPacket(receivingData, 1); // Get response back, should be only length 1
+				// Get response back, should be only length 1
+				receiving = new DatagramPacket(receivingData, 1);
 				sendAndReceive.receive(receiving);
 
 				byteStream.close();
 				objectStream.close();
 			} else {
 				byte sendingData[] = new byte[1];
-				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(), handlerPort); // send
-																														// void
-																														// message
-																														// to
-																														// notify
-																														// that
-																														// I
-																														// want
-																														// a
-																														// message
+				// send void message to notify that I want a message
+				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(), handlerPort);
 				sendAndReceive.send(sending);
 
 				byte receivingData[] = new byte[50];
-				receiving = new DatagramPacket(receivingData, receivingData.length); // get message from handler
+				// Get destination floor from handler
+				receiving = new DatagramPacket(receivingData, receivingData.length);
 				sendAndReceive.receive(receiving);
 
 				if (receivingData[0] != 0) {
-					this.destination = receivingData[0]; // can maybe make this a parameter to the function and pass by
-															// refrence
+					this.destination = receivingData[0];
 				}
 			}
 

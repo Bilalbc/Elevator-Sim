@@ -19,7 +19,7 @@ import java.util.Scanner;
  * 
  * @author Kousha Motazedian, Matthew Parker
  * @version 3.0
- * @Date: 2023-03-11
+ * @date March 9th, 2023
  */
 public class Floor implements Runnable {
 	private File floorRequests;
@@ -127,8 +127,9 @@ public class Floor implements Runnable {
 				receiving = new DatagramPacket(receivingData, receivingData.length); // get message from handler
 				sendAndReceive.receive(receiving);
 
-				ByteArrayInputStream byteStream = new ByteArrayInputStream(receiving.getData()); // unpack into an
-																									// object
+				// unpack into an object
+				ByteArrayInputStream byteStream = new ByteArrayInputStream(receiving.getData());
+
 				ObjectInputStream objectStream = new ObjectInputStream(byteStream);
 
 				sendingMessage = (Message) objectStream.readObject();
