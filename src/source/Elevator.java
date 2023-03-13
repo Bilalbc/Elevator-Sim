@@ -1,10 +1,7 @@
 package source;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -16,10 +13,10 @@ import java.net.SocketException;
  * @Date: 2023-03-09
  * @Version 3.0
  *
- *       An Elevator class that receives floor requests from the scheduler which
- *       indicates the order in which the elevator should pick up/drop off
- *       riders. As of Iteration2, the elevator follows the states of being able
- *       to move up, move down, stop, close doors and open doors.
+ *          An Elevator class that receives floor requests from the scheduler
+ *          which indicates the order in which the elevator should pick up/drop
+ *          off riders. As of Iteration2, the elevator follows the states of
+ *          being able to move up, move down, stop, close doors and open doors.
  */
 
 public class Elevator implements Runnable {
@@ -54,48 +51,51 @@ public class Elevator implements Runnable {
 		this.currentState = ElevatorStates.DOORSCLOSED; // Elevator starts at a closed state
 		this.handlerPort = portNum;
 	}
-	
+
 	private void sendAndGetMessage(PassStateEvent pse, boolean send) {
-		DatagramPacket sending; //both packets
+		DatagramPacket sending; // both packets
 		DatagramPacket receiving;
-		
+
 		try {
-			if(send) {
-				ByteArrayOutputStream byteStream = new ByteArrayOutputStream(); //set up byte array streams to turn Message into a byte array
+			if (send) {
+				// Set up byte array streams to turn Message into a byte array
+				ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
 				ObjectOutputStream objectStream = new ObjectOutputStream(byteStream);
-				
+
 				objectStream.writeObject(pse);
 				objectStream.flush();
-				
+
 				byte sendingData[] = byteStream.toByteArray();
-				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(), handlerPort); //Send to floor handler
+				// Send to floor handler
+				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(), handlerPort);
 				sendAndReceive.send(sending);
-				
+
 				byte receivingData[] = new byte[1];
-				receiving = new DatagramPacket(receivingData, 1); //Get response back, should be only length 1
-				sendAndReceive.receive(receiving);
-				
-				byteStream.close();
-				objectStream.close();
-			}
-			else {
-				byte sendingData[] = new byte[1];
-				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(), handlerPort); //send void message to notify that I want a message
-				sendAndReceive.send(sending);
-				
-				byte receivingData[] = new byte[50];
-				receiving = new DatagramPacket(receivingData, receivingData.length); //get message from handler
+				// Get response back, should be only length 1
+				receiving = new DatagramPacket(receivingData, 1);
 				sendAndReceive.receive(receiving);
 
-				if(receivingData[0] != 0) {
-					this.destination = receivingData[0]; // can maybe make this a parameter to the function and pass by refrence 
+				byteStream.close();
+				objectStream.close();
+			} else {
+				byte sendingData[] = new byte[1];
+				// send void message to notify that I want a message
+				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(), handlerPort);
+				sendAndReceive.send(sending);
+
+				byte receivingData[] = new byte[50];
+				// Get destination floor from handler
+				receiving = new DatagramPacket(receivingData, receivingData.length);
+				sendAndReceive.receive(receiving);
+
+				if (receivingData[0] != 0) {
+					this.destination = receivingData[0];
 				}
 			}
 
 		} catch (IOException e) {
 			System.exit(1);
 		}
-
 
 	}
 
@@ -107,15 +107,15 @@ public class Elevator implements Runnable {
 	 * determine when it should stop to drop off/pick up people.
 	 */
 	public void run() {
-	
-		while(true) {
+
+		while (true) {
 			try {
 				// Lets the scheduler know which floor it is on and its state
-				sendAndGetMessage(new PassStateEvent(currentFloor,currentState, assignedNum), true);
+				sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), true);
 				Thread.sleep(2000);
 				// If the elevator has reached its destination or does not have one(0)
-				sendAndGetMessage(new PassStateEvent(currentFloor,currentState, assignedNum), false);
-				
+				sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), false);
+
 				if (destination == currentFloor && currentState != ElevatorStates.DOORSCLOSED) {
 					currentState = ElevatorStates.STOPPED;
 					Thread.sleep(1000);
@@ -146,8 +146,7 @@ public class Elevator implements Runnable {
 				e.printStackTrace();
 			}
 		}
-		
-	
+
 	}
 
 	/**
@@ -176,14 +175,14 @@ public class Elevator implements Runnable {
 	public ElevatorStates getcurrentState() {
 		return currentState;
 	}
-	
+
 	public static void main(String[] args) {
-		
-		Thread e1 = new Thread(new Elevator (69, 1), "0");
-		Thread e2 = new Thread(new Elevator (70, 2), "1");
-		Thread e3 = new Thread(new Elevator (71, 3), "2");
-		Thread e4 = new Thread(new Elevator (72, 4), "3");
-		
+
+		Thread e1 = new Thread(new Elevator(69, 1), "0");
+		Thread e2 = new Thread(new Elevator(70, 2), "1");
+		Thread e3 = new Thread(new Elevator(71, 3), "2");
+		Thread e4 = new Thread(new Elevator(72, 4), "3");
+
 		e1.start();
 		e2.start();
 		e3.start();

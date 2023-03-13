@@ -12,56 +12,57 @@ package source;
 
 import java.io.Serializable;
 
-public class PassStateEvent implements Serializable{
-	
+public class PassStateEvent implements Serializable {
+
 	private static final long serialVersionUID = 3332242023946759867L;
-	
-	private int currentFloor; 
+
+	private int currentFloor;
 	private Elevator.ElevatorStates currentState;
 	private int assignedNum;
-	
+
 	/**
 	 * Constructor that initializes the object state.
 	 * 
 	 * @param currentFloor of type in
 	 * @param currentState of type Elevator.ElevatorStates
-	 * @param assignedNum int
-	 * */
-	public PassStateEvent(int currentFloor, Elevator.ElevatorStates currentState, int assignedNum)
-	{	
+	 * @param assignedNum  int
+	 */
+	public PassStateEvent(int currentFloor, Elevator.ElevatorStates currentState, int assignedNum) {
 		this.currentFloor = currentFloor;
 		this.currentState = currentState;
 		this.assignedNum = assignedNum;
 	}
-	
+
 	/**
 	 * Getter for currentFloor
+	 * 
 	 * @return int
-	 * */
-	public int getCurrentFloor()
-	{
+	 */
+	public int getCurrentFloor() {
 		return this.currentFloor;
 	}
-	
+
 	/**
 	 * Getter for currentState
+	 * 
 	 * @return Elevator.ElevatorStates
-	 * */
-	public Elevator.ElevatorStates getCurrentState()
-	{
+	 */
+	public Elevator.ElevatorStates getCurrentState() {
 		return this.currentState;
 	}
-	
-	
+
 	/**
 	 * Getter for assignedNum
+	 * 
 	 * @return int
-	 * */
-	public int getAssignedNum()
-	{
+	 */
+	public int getAssignedNum() {
 		return this.assignedNum;
 	}
-	
+
+	/**
+	 * Override to String method
+	 */
 	@Override
 	public String toString() {
 		return "Elevator " + assignedNum + " on Floor " + currentFloor + ", current state " + currentState;

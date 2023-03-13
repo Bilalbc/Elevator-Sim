@@ -11,7 +11,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.net.SocketTimeoutException;
 import java.util.Scanner;
 
 /**
@@ -26,7 +25,7 @@ public class Floor implements Runnable {
 	private File floorRequests;
 	private int messageDelay = 0;
 	private DatagramSocket sendAndReceive;
-	
+
 	private Scanner reader;
 
 	/**
@@ -76,65 +75,70 @@ public class Floor implements Runnable {
 	private boolean validateRequest(String[] request) {
 
 		if (request.length == 5) {
-			if (request[0].matches("\\d+:\\d+") && 
-					request[1].matches("\\d+") && 
-					request[2].equals("UP") || request[2].equals("DOWN") && 
-					request[3].matches("\\d+") && 
-					request[4].matches("\\d+")) {
+			if (request[0].matches("\\d+:\\d+") && request[1].matches("\\d+") && request[2].equals("UP")
+					|| request[2].equals("DOWN") && request[3].matches("\\d+") && request[4].matches("\\d+")) {
 				return true;
 			}
 		}
 		System.err.println("An incorrect request was recieved");
 		return false;
 	}
-	
+
 	/**
 	 * Send and gets messages through UDP
-	 * @param sendingMessage, either null or a Message Object, it is a message object when there is a message to be sent, null when you want to receive a message
-	 * @return Message or null, if you passed null, it will return a message. Otherwise it will return null.
+	 * 
+	 * @param sendingMessage, either null or a Message Object, it is a message
+	 *                        object when there is a message to be sent, null when
+	 *                        you want to receive a message
+	 * @return Message or null, if you passed null, it will return a message.
+	 *         Otherwise it will return null.
 	 */
-	
+
 	private void sendAndGetMessage(Message sendingMessage, boolean send) {
-		DatagramPacket sending; //both packets
+		DatagramPacket sending; // both packets
 		DatagramPacket receiving;
 		try {
-			if(send) {
-				ByteArrayOutputStream byteStream = new ByteArrayOutputStream(); //set up byte array streams to turn Message into a byte array
+			if (send) {
+				ByteArrayOutputStream byteStream = new ByteArrayOutputStream(); // set up byte array streams to turn
+																				// Message into a byte array
 				ObjectOutputStream objectStream = new ObjectOutputStream(byteStream);
-				
+
 				objectStream.writeObject(sendingMessage);
 				objectStream.flush();
-				
+
 				byte sendingData[] = byteStream.toByteArray();
-				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(), FloorHandler.FLOOR_HANDLER_PORT); //Send to floor handler
+				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(),
+						FloorHandler.FLOOR_HANDLER_PORT); // Send to floor handler
 				sendAndReceive.send(sending);
-				
+
 				byte receivingData[] = new byte[1];
-				receiving = new DatagramPacket(receivingData, 1); //Get response back, should be only length 1
+				receiving = new DatagramPacket(receivingData, 1); // Get response back, should be only length 1
 				sendAndReceive.receive(receiving);
-				
+
+				byteStream.close();
+				objectStream.close();
+			} else {
+				byte sendingData[] = new byte[1];
+				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(),
+						FloorHandler.FLOOR_HANDLER_PORT); // send void message to notify that I want a message
+				sendAndReceive.send(sending);
+
+				byte receivingData[] = new byte[FloorHandler.MAX_DATA_SIZE];
+				receiving = new DatagramPacket(receivingData, receivingData.length); // get message from handler
+				sendAndReceive.receive(receiving);
+
+				// unpack into an object
+				ByteArrayInputStream byteStream = new ByteArrayInputStream(receiving.getData());
+
+				ObjectInputStream objectStream = new ObjectInputStream(byteStream);
+
+				sendingMessage = (Message) objectStream.readObject();
+				System.out.println(sendingMessage.getReturnMessage());
+
 				byteStream.close();
 				objectStream.close();
 			}
-			else {
-				byte sendingData[] = new byte[1];
-				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(), FloorHandler.FLOOR_HANDLER_PORT); //send void message to notify that I want a message
-				sendAndReceive.send(sending);
-				
-				byte receivingData[] = new byte[FloorHandler.MAX_DATA_SIZE];
-				receiving = new DatagramPacket(receivingData, receivingData.length); //get message from handler
-				sendAndReceive.receive(receiving);
-				
-				ByteArrayInputStream byteStream = new ByteArrayInputStream(receiving.getData()); //unpack into an object
-				ObjectInputStream objectStream = new ObjectInputStream(byteStream);
-				
-				sendingMessage = (Message) objectStream.readObject();
-				System.out.println(sendingMessage.getReturnMessage());
-				
-				byteStream.close();
-				objectStream.close();			
-			}
-			
+
 		} catch (IOException | ClassNotFoundException e) {
 			reader.close();
 			System.exit(1);
@@ -155,15 +159,14 @@ public class Floor implements Runnable {
 					Message req = createRequest(reader);
 					if (req != null) { // if request was valid
 						System.out.println("Passing message: " + req);
-						
-						sendAndGetMessage(req, true);	
+
+						sendAndGetMessage(req, true);
 					}
-				} 
-				else {
+				} else {
 					// notify scheduler that there are no more requests to be sent
 					Message done = new Message("done");
 					sendAndGetMessage(done, true);
-					
+
 				}
 				Message returned = new Message("");
 				sendAndGetMessage(returned, false);
@@ -172,7 +175,7 @@ public class Floor implements Runnable {
 			System.out.println("filenotfound");
 		}
 	}
-	
+
 	public static void main(String[] args) {
 		File file = new File("src//source//Requests.csv");
 		Thread f = new Thread(new Floor(file), "Floor");

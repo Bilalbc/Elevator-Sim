@@ -1,6 +1,5 @@
 /**
  * @Author: Mohamed Kaddour, Matthew Parker
-
  * @Date: 2023-03-09
  * @Version 3.0
  * 
@@ -238,13 +237,12 @@ public class Scheduler {
 	}
 
 	/**
-	 * Helper method to determine whether the program is complete. 
+	 * Helper method to determine whether the program is complete.
 	 * 
-	 * checks if: 	All the elevators are DOORSCLOSED
-	 * 				All the elevator requests have been handled 
-	 * 				The Floor has notified the requests are complete
+	 * checks if: All the elevators are DOORSCLOSED All the elevator requests have
+	 * been handled The Floor has notified the requests are complete
 	 * 
-	 * @return boolean : Whether the program is complete or not 
+	 * @return boolean : Whether the program is complete or not
 	 */
 	private boolean checkFinished() {
 		boolean elevatorsComplete = true;
