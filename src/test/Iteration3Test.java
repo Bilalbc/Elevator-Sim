@@ -139,13 +139,14 @@ public class Iteration3Test {
 
 		try {
 			Scanner reader = new Scanner(algorithmTestFile);
-
+			
 			while (reader.hasNextLine()) {
 				sch.passMessage(createRequest(reader.nextLine()));
 
 				sch.schedulerAlgorithm();
 			}
 
+			reader.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}

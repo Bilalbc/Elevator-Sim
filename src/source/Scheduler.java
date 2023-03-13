@@ -13,13 +13,19 @@ package source;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+
+import source.Elevator.ElevatorStates;
 
 public class Scheduler {
 
 	public static final int REPLY_BUFFER_SIZE = 1;
 	public static final int MESSAGE_BUFFER_FIRST_INDEX = 0;
 	public static final int REPLY_BUFFER_FIRST_INDEX = 0;
+	public static final int ELEVATOR_QUEUE_FIRST_INDEX = 0;
 
 	public static final int ELEVATOR1 = 0;
 	public static final int ELEVATOR2 = 1;
@@ -55,6 +61,7 @@ public class Scheduler {
 				Arrays.asList(Elevator.ElevatorStates.DOORSCLOSED, Elevator.ElevatorStates.DOORSCLOSED,
 						Elevator.ElevatorStates.DOORSCLOSED, Elevator.ElevatorStates.DOORSCLOSED));
 		this.elevatorQueue = new HashMap<>();
+		
 		this.elevatorQueue.put(ELEVATOR1, new ArrayList<Integer>());
 		this.elevatorQueue.put(ELEVATOR2, new ArrayList<Integer>());
 		this.elevatorQueue.put(ELEVATOR3, new ArrayList<Integer>());
@@ -116,9 +123,13 @@ public class Scheduler {
 
 		this.states = SchedulerStates.SENDING; // SENDING INFORMATIO
 
-		int reply = this.elevatorQueue.get(elevatorThreadNum).get(0); // Get the next destination and give it to the
-																		// elevator
-		this.elevatorQueue.get(elevatorThreadNum).remove(0); // Remove the destination
+		// Get the next destination and give it to the elevator
+		int reply = this.elevatorQueue.get(elevatorThreadNum).get(ELEVATOR_QUEUE_FIRST_INDEX); 
+		
+		// if the elevator has arrived at its destination, remove the destination from the elevator's queue
+		if(elevatorFloors.get(elevatorThreadNum) == elevatorQueue.get(elevatorThreadNum).get(ELEVATOR_QUEUE_FIRST_INDEX)) {
+			elevatorQueue.get(elevatorThreadNum).remove(ELEVATOR_QUEUE_FIRST_INDEX);
+		}
 
 		this.states = SchedulerStates.WAITING; // back to WAITING
 		this.previousState = SchedulerStates.SENDING;
@@ -233,6 +244,27 @@ public class Scheduler {
 			this.elevatorQueue.get(closestElevator).add(destFloor);
 
 			this.messageQueue.remove(MESSAGE_BUFFER_FIRST_INDEX);
+			
+
+			// if elevator is moving down, sort in descending order
+			if(elevatorStates.get(closestElevator) == ElevatorStates.MOVINGDOWN) {
+				Set<Integer> set = new HashSet<Integer>(elevatorQueue.get(closestElevator));
+				elevatorQueue.get(closestElevator).clear();
+				elevatorQueue.get(closestElevator).addAll(set);
+				
+				
+				this.elevatorQueue.get(closestElevator).sort(Collections.reverseOrder());
+			} 
+			// if elevator is moving up, sort in ascending order 
+			else if (elevatorStates.get(closestElevator) == ElevatorStates.MOVINGUP) {
+				Set<Integer> set = new HashSet<Integer>(elevatorQueue.get(closestElevator));
+				elevatorQueue.get(closestElevator).clear();
+				elevatorQueue.get(closestElevator).addAll(set);
+				
+				
+				Collections.sort(elevatorQueue.get(closestElevator));
+				System.out.println(this.elevatorStates.get(1));
+			}
 		}
 	}
 

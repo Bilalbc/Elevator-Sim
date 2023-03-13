@@ -133,6 +133,8 @@ public class Elevator implements Runnable {
 						currentState = ElevatorStates.MOVINGUP;
 					} else if (destination < currentFloor) {
 						currentState = ElevatorStates.MOVINGDOWN;
+					} else {
+						System.out.println("Elevator" + assignedNum + " is already on destination floor");
 					}
 					Thread.sleep(1000);
 					if (currentState.equals(ElevatorStates.MOVINGUP)) {
@@ -142,6 +144,7 @@ public class Elevator implements Runnable {
 						currentFloor--;
 					}
 				}
+				System.out.println("Elevator " + assignedNum + " is on floor " + currentFloor + ". Destination is " + destination);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
