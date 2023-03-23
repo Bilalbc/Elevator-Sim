@@ -252,7 +252,6 @@ public class Scheduler {
 				elevatorQueue.get(closestElevator).clear();
 				elevatorQueue.get(closestElevator).addAll(set);
 				
-				
 				this.elevatorQueue.get(closestElevator).sort(Collections.reverseOrder());
 			} 
 			// if elevator is moving up, sort in ascending order 
@@ -261,9 +260,7 @@ public class Scheduler {
 				elevatorQueue.get(closestElevator).clear();
 				elevatorQueue.get(closestElevator).addAll(set);
 				
-				
 				Collections.sort(elevatorQueue.get(closestElevator));
-				System.out.println(this.elevatorStates.get(1));
 			}
 		}
 	}
