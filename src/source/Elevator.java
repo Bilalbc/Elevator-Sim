@@ -28,7 +28,7 @@ public class Elevator implements Runnable {
 	private DatagramSocket sendAndReceive;
 
 	public static enum ElevatorStates {
-		DOORSOPEN, DOORSCLOSED, MOVINGUP, MOVINGDOWN, STOPPED
+		DOORSOPEN, DOORSCLOSED, MOVINGUP, MOVINGDOWN, STOPPED, TIMEOUT
 	};
 
 	private ElevatorStates currentState;
@@ -107,11 +107,25 @@ public class Elevator implements Runnable {
 	 * determine when it should stop to drop off/pick up people.
 	 */
 	public void run() {
+		
+		Thread tThread = new Thread(new TimeoutTimer(this), "Timer");
+		tThread.start();
 
 		while (true) {
 			try {
+				
+				//If timeout occurs, break out and end the thread.
+				if (Thread.currentThread().isInterrupted())
+				{
+					break;
+				}
+				
+				//Interrupt timer because next floor was successfully reached.
+				tThread.interrupt();
+				
 				// Lets the scheduler know which floor it is on and its state
 				sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), true);
+								
 				Thread.sleep(2000);
 				// If the elevator has reached its destination or does not have one(0)
 				sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), false);
@@ -177,6 +191,12 @@ public class Elevator implements Runnable {
 	 */
 	public ElevatorStates getcurrentState() {
 		return currentState;
+	}
+	
+	public void setTimeout()
+	{
+		this.currentState = ElevatorStates.TIMEOUT;
+		Thread.currentThread().interrupt();
 	}
 
 	public static void main(String[] args) {
