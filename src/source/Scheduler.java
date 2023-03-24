@@ -1,9 +1,9 @@
 /**
- * @Author: Mohamed Kaddour, Matthew Parker
- * @Date: 2023-03-09
- * @Version 3.0
+ * @Author: Mohamed Kaddour, Matthew Parker, Kousha Motazedian
+ * @Date: 2023-03-23
+ * @Version 4.0
  * 
- * As for Iteration3 and Version 3.0, Scheduler class acts as a sorter for the floors based off the requests received from the floor subsystem. 
+ * As for Iteration4 and Version 4.0, Scheduler class acts as a sorter for the floors based off the requests received from the floor subsystem. 
  * Once a message is received, it is added to the queue. It then adds the destination to the queue of a specific elevator thread. 
  * The scheduler also manages whether it would be efficient for a specific elevator (based on its number and current state) to take a certain 
  * request.
@@ -205,21 +205,27 @@ public class Scheduler {
 
 			startFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).startFloor();
 			destFloor = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).destinationFloor();
+			String requestDirection = this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX).getDirection();
 			for (int i : elevatorQueue.keySet()) {
 
 				// Checks for logic
 				boolean movingUp = elevatorStates.get(i) == Elevator.ElevatorStates.MOVINGUP;
 				boolean movingDown = elevatorStates.get(i) == Elevator.ElevatorStates.MOVINGDOWN;
 				boolean doorsClosed = elevatorStates.get(i) == Elevator.ElevatorStates.DOORSCLOSED;
+				boolean requestUp = movingUp && (requestDirection.equals("UP"));
+				boolean requestDown = movingDown && (requestDirection.equals("DOWN"));
 				boolean startFloorBelow = startFloor < elevatorFloors.get(i);
 				boolean startFloorAbove = startFloor > elevatorFloors.get(i);
 				boolean startFloorEquals = startFloor == elevatorFloors.get(i);
+				boolean up = (startFloor - destFloor) < 0;
 
 				// Checks to see if the elevator is able to take on said request
-				if ((movingUp && startFloorAbove) || (movingDown && startFloorBelow) || (startFloorEquals)
+				if ((requestUp && startFloorAbove) || (requestDown && startFloorBelow) || (startFloorEquals && ((up && movingUp) || (!up && movingDown) ))
 						|| (doorsClosed && elevatorQueue.get(i).isEmpty())) {
+					
+					
 					validElevators.add(i);
-					valid = true;
+					valid = true;	
 				}
 			}
 		}
@@ -239,28 +245,44 @@ public class Scheduler {
 					closestElevator = validElevators.get(i);
 				}
 			}
-
-			this.elevatorQueue.get(closestElevator).add(startFloor);
-			this.elevatorQueue.get(closestElevator).add(destFloor);
-
+			
+			int size = elevatorQueue.get(closestElevator).size();
+			if(size != 1) {
+				this.elevatorQueue.get(closestElevator).add(0, destFloor);
+				this.elevatorQueue.get(closestElevator).add(0, startFloor);
+			}
+			else {
+				this.elevatorQueue.get(closestElevator).add(startFloor);
+				this.elevatorQueue.get(closestElevator).add(destFloor);
+			}
+			
+			size = elevatorQueue.get(closestElevator).size();
 			this.messageQueue.remove(MESSAGE_BUFFER_FIRST_INDEX);
 			
-
 			// if elevator is moving down, sort in descending order
 			if(elevatorStates.get(closestElevator) == ElevatorStates.MOVINGDOWN) {
-				Set<Integer> set = new HashSet<Integer>(elevatorQueue.get(closestElevator));
-				elevatorQueue.get(closestElevator).clear();
-				elevatorQueue.get(closestElevator).addAll(set);
-				
-				this.elevatorQueue.get(closestElevator).sort(Collections.reverseOrder());
+				if((size > 2) && (elevatorQueue.get(closestElevator).get(size - 2) - elevatorQueue.get(closestElevator).get(size - 1) < 0)) {
+					Collections.reverse(elevatorQueue.get(closestElevator).subList(0, size - 3));
+				}
+				else if((size > 2) && (elevatorQueue.get(closestElevator).get(0) - elevatorQueue.get(closestElevator).get(1) < 0)) {
+					Collections.reverse(elevatorQueue.get(closestElevator).subList(2, size - 1));
+				}
+				else {
+					this.elevatorQueue.get(closestElevator).sort(Collections.reverseOrder());
+				}
 			} 
 			// if elevator is moving up, sort in ascending order 
 			else if (elevatorStates.get(closestElevator) == ElevatorStates.MOVINGUP) {
-				Set<Integer> set = new HashSet<Integer>(elevatorQueue.get(closestElevator));
-				elevatorQueue.get(closestElevator).clear();
-				elevatorQueue.get(closestElevator).addAll(set);
 				
-				Collections.sort(elevatorQueue.get(closestElevator));
+				if((size > 2) && (elevatorQueue.get(closestElevator).get(size - 2) - elevatorQueue.get(closestElevator).get(size - 1) < 0)) {
+					Collections.reverse(elevatorQueue.get(closestElevator).subList(0, size - 3));
+				}
+				else if((size > 2) && (elevatorQueue.get(closestElevator).get(0) - elevatorQueue.get(closestElevator).get(1) < 0)) {
+					Collections.reverse(elevatorQueue.get(closestElevator).subList(2, size - 1));
+				}
+				else {
+					Collections.sort(elevatorQueue.get(closestElevator));
+				}
 			}
 		}
 	}
