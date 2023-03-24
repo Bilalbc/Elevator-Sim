@@ -1,12 +1,15 @@
 package source;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.util.ArrayList;
 
 /**
  * @author Akshay V., Kousha Motazedian, Matthew Parker
@@ -26,6 +29,7 @@ public class Elevator implements Runnable {
 	private int destination = 0; // current destination floor, 0 means no destination at the moment
 	private int handlerPort;
 	private DatagramSocket sendAndReceive;
+	private ArrayList<Boolean> lightsOn;
 
 	public static enum ElevatorStates {
 		DOORSOPEN, DOORSCLOSED, MOVINGUP, MOVINGDOWN, STOPPED
@@ -50,6 +54,7 @@ public class Elevator implements Runnable {
 		this.assignedNum = assignedNum;
 		this.currentState = ElevatorStates.DOORSCLOSED; // Elevator starts at a closed state
 		this.handlerPort = portNum;
+		this.lightsOn = new ArrayList<Boolean>();
 	}
 
 	private void sendAndGetMessage(PassStateEvent pse, boolean send) {
@@ -84,10 +89,31 @@ public class Elevator implements Runnable {
 				sendAndReceive.send(sending);
 
 				byte receivingData[] = new byte[50];
-				// Get destination floor from handler
+				// Get destination queue from handler
 				receiving = new DatagramPacket(receivingData, receivingData.length);
 				sendAndReceive.receive(receiving);
 
+				// unpack into an object
+				ByteArrayInputStream byteStream = new ByteArrayInputStream(receiving.getData());
+
+				ObjectInputStream objectStream = new ObjectInputStream(byteStream);
+
+				ArrayList<Integer> temp = new ArrayList<Integer>();
+				
+				try {
+					temp = (ArrayList<Integer>) objectStream.readObject();
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
+				}
+				
+				for(Integer i : temp) {
+					lightsOn.set(temp.get(i), true);
+				}
+				
+
+				byteStream.close();
+				objectStream.close();
+				
 				if (receivingData[0] != 0) {
 					this.destination = receivingData[0];
 				}
