@@ -45,10 +45,9 @@ public class Scheduler {
 	};
 
 	private SchedulerStates states;
-	private SchedulerStates previousState; // for testing purposes
 
 	private HashMap<Integer, ArrayList<Integer>> elevatorQueue;
-
+	private HashMap<Integer, ArrayList<Integer>> destinationFloor;
 	/**
 	 * Constructor for class Scheduler. Initializes messageQueue, replyQueue,
 	 * elevatorFloors, elevatorStates and the elevatorQueue for all elevators.
@@ -61,11 +60,17 @@ public class Scheduler {
 				Arrays.asList(Elevator.ElevatorStates.DOORSCLOSED, Elevator.ElevatorStates.DOORSCLOSED,
 						Elevator.ElevatorStates.DOORSCLOSED, Elevator.ElevatorStates.DOORSCLOSED));
 		this.elevatorQueue = new HashMap<>();
+		this.destinationFloor = new HashMap<>();
 		
 		this.elevatorQueue.put(ELEVATOR1, new ArrayList<Integer>());
 		this.elevatorQueue.put(ELEVATOR2, new ArrayList<Integer>());
 		this.elevatorQueue.put(ELEVATOR3, new ArrayList<Integer>());
 		this.elevatorQueue.put(ELEVATOR4, new ArrayList<Integer>());
+		
+		this.destinationFloor.put(ELEVATOR1, new ArrayList<Integer>());
+		this.destinationFloor.put(ELEVATOR2, new ArrayList<Integer>());
+		this.destinationFloor.put(ELEVATOR3, new ArrayList<Integer>());
+		this.destinationFloor.put(ELEVATOR4, new ArrayList<Integer>());
 
 		this.states = SchedulerStates.WAITING;
 	}
@@ -91,7 +96,6 @@ public class Scheduler {
 		this.messageQueue.add(message); // add the message to the message queue
 
 		this.states = SchedulerStates.WAITING; // Set to RECEIVING information
-		this.previousState = SchedulerStates.RECEIVING;
 		notifyAll(); // Let all threads know its ready
 	}
 
@@ -104,7 +108,7 @@ public class Scheduler {
 	 * @param none
 	 * @return Floor to be read.
 	 */
-	public synchronized int readMessage() {
+	public synchronized ArrayList<Integer> readMessage() {
 
 		// If the scheduler is not in the WAITING state, thread must wait until it is
 		while (states != SchedulerStates.WAITING) {
@@ -117,14 +121,23 @@ public class Scheduler {
 
 		int elevatorThreadNum = Integer.parseInt(Thread.currentThread().getName());
 
-		if (elevatorQueue.get(elevatorThreadNum).size() == 0) { // IF THERE ARE NO NEW DESTINATIONS
-			return 0;
-		}
 
 		this.states = SchedulerStates.SENDING; // SENDING INFORMATIO
 
+		
+		if (elevatorQueue.get(elevatorThreadNum).size() == 0 || destinationFloor.get(elevatorThreadNum).size() == 0) { // IF THERE ARE NO NEW DESTINATIONS
+			ArrayList<Integer> temp = new ArrayList<>();
+			temp.add(0, 0);
+			notifyAll();
+			
+			this.states = SchedulerStates.WAITING; // back to WAITING
+			
+			return temp;
+		}
+
 		// Get the next destination and give it to the elevator
-		int reply = this.elevatorQueue.get(elevatorThreadNum).get(ELEVATOR_QUEUE_FIRST_INDEX); 
+		this.destinationFloor.get(elevatorThreadNum).add(0, elevatorQueue.get(elevatorThreadNum).get(ELEVATOR_QUEUE_FIRST_INDEX));
+		ArrayList<Integer> reply = this.destinationFloor.get(elevatorThreadNum);
 		
 		// if the elevator has arrived at its destination, remove the destination from the elevator's queue
 		if(elevatorFloors.get(elevatorThreadNum) == elevatorQueue.get(elevatorThreadNum).get(ELEVATOR_QUEUE_FIRST_INDEX)) {
@@ -132,7 +145,6 @@ public class Scheduler {
 		}
 
 		this.states = SchedulerStates.WAITING; // back to WAITING
-		this.previousState = SchedulerStates.SENDING;
 		notifyAll();
 
 		return reply;
@@ -146,7 +158,10 @@ public class Scheduler {
 	 *
 	 * Forms a reply to be sent to the Floor class.
 	 * 
-	 * @param PassStateEvent pse encapsulating all information. 
+	 * @param currentFloor  int of the calling Elevator thread
+	 * @param elevatorState the current state of the elevator of type
+	 *                      Elevator.ElevatorStates
+	 * @param elevatorNum,  the elevator number.
 	 */
 	public synchronized void passState(PassStateEvent pse) {
 		int currentFloor = pse.getCurrentFloor();
@@ -167,13 +182,12 @@ public class Scheduler {
 			System.out.println("Elevator " + elevatorNum + " has timed out before reaching next floor...elevator shutting down");
 			this.elevatorQueue.get(elevatorNum).clear();
 		}
-
+		
 		// Update current floor and current state of called elevator
 		elevatorFloors.set(elevatorNum - 1, currentFloor);
 		elevatorStates.set(elevatorNum - 1, elevatorState);
 
 		states = SchedulerStates.RECEIVING; // Getting information
-		this.previousState = SchedulerStates.RECEIVING;
 
 		schedulerAlgorithm();
 
@@ -202,7 +216,6 @@ public class Scheduler {
 
 		int startFloor = 0;
 		int destFloor = 0;
-
 		if (messageQueue.size() != 0) { // Logic to get destinations for elevator, check if there are messages available
 			// Get start and destination floor of the request
 
@@ -223,10 +236,10 @@ public class Scheduler {
 				boolean up = (startFloor - destFloor) < 0;
 
 				// Checks to see if the elevator is able to take on said request
-				if ((requestUp && startFloorAbove) || (requestDown && startFloorBelow) || (startFloorEquals && ((up && movingUp) || (!up && movingDown) ))
+				if ((requestUp && startFloorAbove) || (requestDown && startFloorBelow) 
+						|| (startFloorEquals && ((up && movingUp) || (!up && movingDown) ))
 						|| (doorsClosed && elevatorQueue.get(i).isEmpty())) {
-					
-					
+
 					validElevators.add(i);
 					valid = true;	
 				}
@@ -248,42 +261,43 @@ public class Scheduler {
 					closestElevator = validElevators.get(i);
 				}
 			}
-			
+
 			int size = elevatorQueue.get(closestElevator).size();
-			if(size != 1) {
+			if (size != 1) {
 				this.elevatorQueue.get(closestElevator).add(0, destFloor);
 				this.elevatorQueue.get(closestElevator).add(0, startFloor);
-			}
-			else {
+			} else {
 				this.elevatorQueue.get(closestElevator).add(startFloor);
 				this.elevatorQueue.get(closestElevator).add(destFloor);
 			}
-			
+
 			size = elevatorQueue.get(closestElevator).size();
+			
+			this.destinationFloor.get(closestElevator).add(0, destFloor);
 			this.messageQueue.remove(MESSAGE_BUFFER_FIRST_INDEX);
 			
 			// if elevator is moving down, sort in descending order
-			if(elevatorStates.get(closestElevator) == ElevatorStates.MOVINGDOWN) {
-				if((size > 2) && (elevatorQueue.get(closestElevator).get(size - 2) - elevatorQueue.get(closestElevator).get(size - 1) < 0)) {
+			if (elevatorStates.get(closestElevator) == ElevatorStates.MOVINGDOWN) {
+				if ((size > 2) && (elevatorQueue.get(closestElevator).get(size - 2)
+						- elevatorQueue.get(closestElevator).get(size - 1) < 0)) {
 					Collections.reverse(elevatorQueue.get(closestElevator).subList(0, size - 3));
-				}
-				else if((size > 2) && (elevatorQueue.get(closestElevator).get(0) - elevatorQueue.get(closestElevator).get(1) < 0)) {
+				} else if ((size > 2) && (elevatorQueue.get(closestElevator).get(0)
+						- elevatorQueue.get(closestElevator).get(1) < 0)) {
 					Collections.reverse(elevatorQueue.get(closestElevator).subList(2, size - 1));
-				}
-				else {
+				} else {
 					this.elevatorQueue.get(closestElevator).sort(Collections.reverseOrder());
 				}
-			} 
+			}
 			// if elevator is moving up, sort in ascending order 
 			else if (elevatorStates.get(closestElevator) == ElevatorStates.MOVINGUP) {
 				
-				if((size > 2) && (elevatorQueue.get(closestElevator).get(size - 2) - elevatorQueue.get(closestElevator).get(size - 1) < 0)) {
+				if ((size > 2) && (elevatorQueue.get(closestElevator).get(size - 2)
+						- elevatorQueue.get(closestElevator).get(size - 1) < 0)) {
 					Collections.reverse(elevatorQueue.get(closestElevator).subList(0, size - 3));
-				}
-				else if((size > 2) && (elevatorQueue.get(closestElevator).get(0) - elevatorQueue.get(closestElevator).get(1) < 0)) {
+				} else if ((size > 2) && (elevatorQueue.get(closestElevator).get(0)
+						- elevatorQueue.get(closestElevator).get(1) < 0)) {
 					Collections.reverse(elevatorQueue.get(closestElevator).subList(2, size - 1));
-				}
-				else {
+				} else {
 					Collections.sort(elevatorQueue.get(closestElevator));
 				}
 			}
@@ -350,7 +364,6 @@ public class Scheduler {
 
 		notifyAll();
 
-		this.previousState = SchedulerStates.SENDING;
 		return reply;
 	}
 
@@ -406,15 +419,6 @@ public class Scheduler {
 	 */
 	public SchedulerStates getSchedulerState() {
 		return this.states;
-	}
-
-	/**
-	 * Getter method that returns the previous state of the Scheduler
-	 * 
-	 * @return SchedulerStates : previous state of the Scheduler
-	 */
-	public SchedulerStates getPreviousSchedulerState() {
-		return this.previousState;
 	}
 
 	/**

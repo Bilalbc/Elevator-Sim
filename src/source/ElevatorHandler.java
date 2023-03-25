@@ -10,9 +10,11 @@
 package source;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
@@ -25,7 +27,7 @@ public class ElevatorHandler implements Runnable {
 	private boolean send;
 
 	public static final int MAX_DATA_SIZE = 250;
-	public static final int TIMEOUT = 40000; // placeholder value for now
+	public static final int TIMEOUT = 40000; 
 
 	/**
 	 * ElevatorHandler constructor that that takes in the scheduler and initializes
@@ -112,8 +114,14 @@ public class ElevatorHandler implements Runnable {
 			} else {
 				// If send is false, then the reply is the actual reply from the scheduler, thus
 				// serialize reply.
-				replyData = new byte[1];
-				replyData[0] = (byte) scheduler.readMessage();
+				ByteArrayOutputStream byteStream = new ByteArrayOutputStream(); // set up byte array streams to turn
+				// Message into a byte array
+				ObjectOutputStream objectStream = new ObjectOutputStream(byteStream);
+
+				objectStream.writeObject(scheduler.readMessage());
+				objectStream.flush();
+
+				replyData = byteStream.toByteArray();
 
 				this.send = true;
 			}
