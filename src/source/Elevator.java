@@ -28,7 +28,7 @@ public class Elevator implements Runnable {
 	private DatagramSocket sendAndReceive;
 
 	public static enum ElevatorStates {
-		DOORSOPEN, DOORSCLOSED, MOVINGUP, MOVINGDOWN, STOPPED, TIMEOUT
+		DOORSOPEN, DOORSCLOSED, MOVINGUP, MOVINGDOWN, STOPPED, TIMEOUT, STUCKOPEN, STUCKCLOSED
 	};
 
 	private ElevatorStates currentState;
@@ -119,6 +119,15 @@ public class Elevator implements Runnable {
 				{
 					break;
 				}
+				//If the elevator is stuck, the state will be modified to either DOORSOPEN or DOORSCLOSED respectively. 
+				else if (currentState == ElevatorStates.STUCKCLOSED) {
+					System.out.println("Elevator " + assignedNum + " has its doors stuck closed. Fixing...");
+					currentState = ElevatorStates.DOORSOPEN;
+				}
+				else if (currentState == ElevatorStates.STUCKOPEN) {
+					System.out.println("Elevator " + assignedNum + " has its doors stuck open. Fixing...");
+					currentState = ElevatorStates.DOORSCLOSED;
+				}
 				
 				//Interrupt timer because next floor was successfully reached.
 				tThread.interrupt();
@@ -197,6 +206,11 @@ public class Elevator implements Runnable {
 	{
 		this.currentState = ElevatorStates.TIMEOUT;
 		Thread.currentThread().interrupt();
+	}
+	
+	//For testing purposes
+	public void setState(Elevator.ElevatorStates state) {
+		this.currentState = state;
 	}
 
 	public static void main(String[] args) {
