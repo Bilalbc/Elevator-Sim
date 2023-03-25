@@ -61,12 +61,13 @@ public class Scheduler {
 				Arrays.asList(Elevator.ElevatorStates.DOORSCLOSED, Elevator.ElevatorStates.DOORSCLOSED,
 						Elevator.ElevatorStates.DOORSCLOSED, Elevator.ElevatorStates.DOORSCLOSED));
 		this.elevatorQueue = new HashMap<>();
+		this.destinationFloor = new HashMap<>();
 
 		this.elevatorQueue.put(ELEVATOR1, new ArrayList<Integer>());
 		this.elevatorQueue.put(ELEVATOR2, new ArrayList<Integer>());
 		this.elevatorQueue.put(ELEVATOR3, new ArrayList<Integer>());
 		this.elevatorQueue.put(ELEVATOR4, new ArrayList<Integer>());
-
+		
 		this.destinationFloor.put(ELEVATOR1, new ArrayList<Integer>());
 		this.destinationFloor.put(ELEVATOR2, new ArrayList<Integer>());
 		this.destinationFloor.put(ELEVATOR3, new ArrayList<Integer>());

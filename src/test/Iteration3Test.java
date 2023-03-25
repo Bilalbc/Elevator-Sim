@@ -155,7 +155,7 @@ public class Iteration3Test {
 			try {
 				Thread.sleep(500);
 
-				System.out.println(sch.getElevatorQueue().get(0));
+			//	System.out.println(sch.getElevatorQueue());
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}

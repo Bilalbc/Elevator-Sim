@@ -24,7 +24,7 @@ public class TimeoutTimer implements Runnable {
 				continue;
 			}
 			
-			elevator.setTimeout();
+	//		elevator.setTimeout();
 		}
 	}
 

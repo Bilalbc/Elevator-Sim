@@ -29,8 +29,12 @@ public class Elevator implements Runnable {
 	private int destination = 0; // current destination floor, 0 means no destination at the moment
 	private int handlerPort;
 	private DatagramSocket sendAndReceive;
-	private ArrayList<Boolean> lightsOn;
+	private boolean[] lightsGrid;
 
+	private static final int NUM_FLOORS = 10;
+	private static final int TIME_TO_MOVE = 4083;
+	private static final int TIME_DOORS = 1000;
+	
 	public static enum ElevatorStates {
 		DOORSOPEN, DOORSCLOSED, MOVINGUP, MOVINGDOWN, STOPPED, TIMEOUT
 	};
@@ -45,7 +49,7 @@ public class Elevator implements Runnable {
 	public Elevator(int portNum, int assignedNum) {
 		try {
 			this.sendAndReceive = new DatagramSocket();
-			sendAndReceive.setSoTimeout(10000);
+		//	sendAndReceive.setSoTimeout(10000);
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
@@ -54,7 +58,7 @@ public class Elevator implements Runnable {
 		this.assignedNum = assignedNum;
 		this.currentState = ElevatorStates.DOORSCLOSED; // Elevator starts at a closed state
 		this.handlerPort = portNum;
-		this.lightsOn = new ArrayList<Boolean>();
+		this.lightsGrid = new boolean[NUM_FLOORS];
 	}
 
 	private void sendAndGetMessage(PassStateEvent pse, boolean send) {
@@ -88,7 +92,7 @@ public class Elevator implements Runnable {
 				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(), handlerPort);
 				sendAndReceive.send(sending);
 
-				byte receivingData[] = new byte[50];
+				byte receivingData[] = new byte[150];
 				// Get destination queue from handler
 				receiving = new DatagramPacket(receivingData, receivingData.length);
 				sendAndReceive.receive(receiving);
@@ -106,20 +110,22 @@ public class Elevator implements Runnable {
 					e.printStackTrace();
 				}
 				
-				for(Integer i : temp) {
-					lightsOn.set(temp.get(i), true);
+				System.out.println(temp);
+				for(int i = 0; i < temp.size(); i++) {
+					lightsGrid[i] = true;					
 				}
 				
 
 				byteStream.close();
 				objectStream.close();
 				
-				if (receivingData[0] != 0) {
-					this.destination = receivingData[0];
+				if(temp.size() > 0) {
+					this.destination = temp.get(0);
 				}
 			}
 
 		} catch (IOException e) {
+			e.printStackTrace();
 			System.exit(1);
 		}
 
@@ -153,13 +159,13 @@ public class Elevator implements Runnable {
 
 				if (destination == currentFloor && currentState != ElevatorStates.DOORSCLOSED) {
 					currentState = ElevatorStates.STOPPED;
-					Thread.sleep(1000);
+					Thread.sleep(TIME_DOORS);
 					// If there is a destination request for the current floor, the doors open
 					currentState = ElevatorStates.DOORSOPEN;
 
 					System.out.println(
 							"Elevator " + assignedNum + ": Letting People in and out on floor " + currentFloor + "!");
-					Thread.sleep(1000);
+					Thread.sleep(TIME_DOORS);
 					this.currentState = ElevatorStates.DOORSCLOSED; // Set to doors closed
 				}
 
@@ -174,7 +180,7 @@ public class Elevator implements Runnable {
 					} else {
 						System.out.println("Elevator" + assignedNum + " is already on destination floor");
 					}
-					Thread.sleep(4200);
+					Thread.sleep(TIME_TO_MOVE);
 					if (currentState.equals(ElevatorStates.MOVINGUP)) {
 						currentFloor++;
 					}
@@ -184,6 +190,11 @@ public class Elevator implements Runnable {
 				}
 				System.out.println(
 						"Elevator " + assignedNum + " is on floor " + currentFloor + ". Destination is " + destination);
+
+				for(boolean i : lightsGrid) {
+					System.out.print(i + ", ");
+				}
+				
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
