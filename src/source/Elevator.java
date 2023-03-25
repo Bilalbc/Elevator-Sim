@@ -13,8 +13,8 @@ import java.util.ArrayList;
 
 /**
  * @author Akshay V., Kousha Motazedian, Matthew Parker
- * @Date: 2023-03-09
- * @Version 3.0
+ * @Date: 2023-03-25
+ * @Version 4.0
  *
  *          An Elevator class that receives floor requests from the scheduler
  *          which indicates the order in which the elevator should pick up/drop

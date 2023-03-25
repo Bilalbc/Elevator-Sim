@@ -7,8 +7,8 @@ import java.io.Serializable;
  * the floor and elevator. Implements Serializable.
  * 
  * @author Kousha Motazedian
- * @version 3.0
- * @date March 9th, 2023
+ * @version 4.0
+ * @date March 25th, 2023
  *
  */
 public class Message implements Serializable {
