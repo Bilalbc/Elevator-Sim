@@ -30,7 +30,7 @@ public class Elevator implements Runnable {
 	private int handlerPort;
 	private boolean carryingPassengers;
 	private DatagramSocket sendAndReceive;
-	
+
 	private boolean[] lightsGrid;
 
 	private static final int NUM_FLOORS = 10;
@@ -99,6 +99,7 @@ public class Elevator implements Runnable {
 
 				byte receivingData[] = new byte[MAX_DATA_SIZE];
 				// Get destination queue from handler
+
 				receiving = new DatagramPacket(receivingData, receivingData.length);
 				sendAndReceive.receive(receiving);
 
