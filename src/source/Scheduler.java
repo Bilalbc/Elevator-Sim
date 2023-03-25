@@ -146,10 +146,7 @@ public class Scheduler {
 	 *
 	 * Forms a reply to be sent to the Floor class.
 	 * 
-	 * @param currentFloor  int of the calling Elevator thread
-	 * @param elevatorState the current state of the elevator of type
-	 *                      Elevator.ElevatorStates
-	 * @param elevatorNum,  the elevator number.
+	 * @param PassStateEvent pse encapsulating all information. 
 	 */
 	public synchronized void passState(PassStateEvent pse) {
 		int currentFloor = pse.getCurrentFloor();
@@ -163,6 +160,12 @@ public class Scheduler {
 			} catch (InterruptedException e) {
 				System.err.println(e);
 			}
+		}
+		
+		if (elevatorState == Elevator.ElevatorStates.TIMEOUT)
+		{
+			System.out.println("Elevator " + elevatorNum + " has timed out before reaching next floor...elevator shutting down");
+			this.elevatorQueue.get(elevatorNum).clear();
 		}
 
 		// Update current floor and current state of called elevator
