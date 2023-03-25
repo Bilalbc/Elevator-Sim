@@ -1,8 +1,8 @@
 /**
  * @Author: Mohamed Kaddour
 
- * @Date: 2023-03-11
- * @Version 3.0
+ * @Date: 2023-03-25
+ * @Version 4.0
  * 
  * Even class that is used to encapsulate several values that are meant to be sent over UDP to the scheduler. 
  * Used to help with serialization. 
