@@ -36,6 +36,8 @@ public class Elevator implements Runnable {
 	private static final int NUM_FLOORS = 10;
 	private static final int TIME_TO_MOVE = 4083;
 	private static final int TIME_DOORS = 1000;
+	private static final int MAX_DATA_SIZE = 250;
+	
 	
 	public static enum ElevatorStates {
 		DOORSOPEN, DOORSCLOSED, MOVINGUP, MOVINGDOWN, STOPPED, TIMEOUT, STUCKOPEN, STUCKCLOSED
@@ -51,7 +53,7 @@ public class Elevator implements Runnable {
 	public Elevator(int portNum, int assignedNum) {
 		try {
 			this.sendAndReceive = new DatagramSocket();
-		//	sendAndReceive.setSoTimeout(10000);
+			sendAndReceive.setSoTimeout(10000);
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
@@ -95,7 +97,7 @@ public class Elevator implements Runnable {
 				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(), handlerPort);
 				sendAndReceive.send(sending);
 
-				byte receivingData[] = new byte[250];
+				byte receivingData[] = new byte[MAX_DATA_SIZE];
 				// Get destination queue from handler
 				receiving = new DatagramPacket(receivingData, receivingData.length);
 				sendAndReceive.receive(receiving);
@@ -161,8 +163,7 @@ public class Elevator implements Runnable {
 				if (currentState == ElevatorStates.TIMEOUT) {
 					Thread.currentThread().interrupt();
 					Thread.sleep(200);
-
-					System.out.println("clearing");
+					
 					sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), true);
 					continue;
 				}
@@ -221,6 +222,12 @@ public class Elevator implements Runnable {
 
 	}
 	
+	/**
+	 * Helper method that checks if the elevator doors are in a stuck state 
+	 * If the doors are stuck, gracefully fix and continue
+	 * 
+	 * @throws InterruptedException
+	 */
 	private void checkDoorsStuck() throws InterruptedException{
 		//If the elevator is stuck, the state will be modified to either DOORSOPEN or DOORSCLOSED respectively. 
 		if (currentState == ElevatorStates.STUCKCLOSED) {
@@ -235,6 +242,12 @@ public class Elevator implements Runnable {
 		}
 	}
 
+	/**
+	 * Helper method to see if there are any destinations
+	 * Used to determine if there are any passengers on board
+	 * 
+	 * @return boolean : If passengers are on board 
+	 */
 	private boolean hasDestinations() {
 		for(boolean i : lightsGrid) {
 			if(i) return true;
@@ -275,7 +288,6 @@ public class Elevator implements Runnable {
 	//For testing purposes
 	public void setState(Elevator.ElevatorStates state) {
 		this.currentState = state;
-		System.out.println("TIMEOUT ");
 	}
 
 	public static void main(String[] args) {

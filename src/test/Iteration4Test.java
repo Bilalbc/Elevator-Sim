@@ -1,5 +1,15 @@
 package test;
 
+/**
+ * @author Bilal Chaudhry
+ * @Date: 2023-03-25
+ * @Version 4.0
+ * 
+ *          Unit test class for Elevator-sim
+ * 
+ *          Tests failure states for Elevator and Scheduler, and if they are handled properly
+ *
+ */
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -30,6 +40,12 @@ public class Iteration4Test {
 		this.algorithmTestFile = new File("src//test//AlgorithmTest.csv");
 	}
 
+	/**
+	 * Test case for Elevator TIMEOUT error state. Tests by forcing the elevator
+	 * thread to suspend to allow the TimeoutTimer to interrupt the Elevator thread.
+	 * 
+	 * @result test passes if the Elevator's state is set to TIMEOUT
+	 */
 	@Test
 	public void testElevatorTimeoutHandling() {
 		Scheduler sch = new Scheduler();
@@ -52,10 +68,12 @@ public class Iteration4Test {
 
 			reader.close();
 
+			// Force the Timeout Timer to interrupt the Elevator
 			e1.suspend();
 			Thread.sleep(2000);
 			e1.resume();
 
+			// Wait until the state is set to TIMEOUT
 			while (ev.getcurrentState() != ElevatorStates.TIMEOUT) {
 				Thread.sleep(100);
 			}
@@ -66,6 +84,13 @@ public class Iteration4Test {
 		}
 	}
 
+	/**
+	 * Test case for Elevator DOORSSTUCK states. tests by setting the state to
+	 * STUCKOPEN or STUCKCLOSED, and verifying the error is handled gracefully
+	 * 
+	 * @result Test passes if doors are set to correct Error State and then righted
+	 *         automatically
+	 */
 	@Test
 	public void testDoorsStuckHandling() {
 		Elevator elevator1 = new Elevator(69, 1);
@@ -92,7 +117,6 @@ public class Iteration4Test {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-
 	}
 
 	/**

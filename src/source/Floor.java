@@ -37,7 +37,7 @@ public class Floor implements Runnable {
 		this.floorRequests = file;
 		try {
 			this.sendAndReceive = new DatagramSocket();
-		//	sendAndReceive.setSoTimeout(10000);
+			sendAndReceive.setSoTimeout(10000);
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}

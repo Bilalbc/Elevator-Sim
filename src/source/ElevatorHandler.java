@@ -28,7 +28,7 @@ public class ElevatorHandler implements Runnable {
 	private boolean send;
 
 	public static final int MAX_DATA_SIZE = 250;
-	public static final int TIMEOUT = 40000; // placeholder value for now
+	public static final int TIMEOUT = 40000; 
 
 	/**
 	 * ElevatorHandler constructor that that takes in the scheduler and initializes
@@ -43,7 +43,7 @@ public class ElevatorHandler implements Runnable {
 
 		try {
 			socket = new DatagramSocket(elevatorPort);
-			//socket.setSoTimeout(TIMEOUT);
+			socket.setSoTimeout(TIMEOUT);
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);
