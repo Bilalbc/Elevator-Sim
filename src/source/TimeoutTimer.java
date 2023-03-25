@@ -17,14 +17,12 @@ public class TimeoutTimer implements Runnable {
 		while (true)
 		{
 			try {
-				System.out.println("going to sleep " + elevator.getAssignedNum());
 				Thread.sleep(SLEEP_TIME);
-				System.out.println("woken up " + elevator.getAssignedNum());
 			} catch (InterruptedException e) {
 				continue;
 			}
 			
-	//		elevator.setTimeout();
+			elevator.setTimeout();
 		}
 	}
 

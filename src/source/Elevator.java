@@ -38,7 +38,7 @@ public class Elevator implements Runnable {
 	private static final int TIME_DOORS = 1000;
 	
 	public static enum ElevatorStates {
-		DOORSOPEN, DOORSCLOSED, MOVINGUP, MOVINGDOWN, STOPPED, TIMEOUT
+		DOORSOPEN, DOORSCLOSED, MOVINGUP, MOVINGDOWN, STOPPED, TIMEOUT, STUCKOPEN, STUCKCLOSED
 	};
 
 	private ElevatorStates currentState;
@@ -150,6 +150,7 @@ public class Elevator implements Runnable {
 
 		while (!Thread.currentThread().isInterrupted()) {
 			try {
+				checkDoorsStuck();
 				// Lets the scheduler know which floor it is on and its state
 				sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), true);
 
@@ -159,6 +160,10 @@ public class Elevator implements Runnable {
 				// If timeout occurs, break out and end the thread.
 				if (currentState == ElevatorStates.TIMEOUT) {
 					Thread.currentThread().interrupt();
+					Thread.sleep(200);
+
+					System.out.println("clearing");
+					sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), true);
 					continue;
 				}
 
@@ -215,6 +220,20 @@ public class Elevator implements Runnable {
 		}
 
 	}
+	
+	private void checkDoorsStuck() throws InterruptedException{
+		//If the elevator is stuck, the state will be modified to either DOORSOPEN or DOORSCLOSED respectively. 
+		if (currentState == ElevatorStates.STUCKCLOSED) {
+			System.out.println("Elevator " + assignedNum + " has its doors stuck closed. Fixing...");
+			Thread.sleep(2000);
+			currentState = ElevatorStates.DOORSOPEN;
+		}
+		else if (currentState == ElevatorStates.STUCKOPEN) {
+			System.out.println("Elevator " + assignedNum + " has its doors stuck open. Fixing...");
+			Thread.sleep(2000);
+			currentState = ElevatorStates.DOORSCLOSED;
+		}
+	}
 
 	private boolean hasDestinations() {
 		for(boolean i : lightsGrid) {
@@ -251,6 +270,12 @@ public class Elevator implements Runnable {
 
 	public void setTimeout() {
 		this.currentState = ElevatorStates.TIMEOUT;
+	}
+	
+	//For testing purposes
+	public void setState(Elevator.ElevatorStates state) {
+		this.currentState = state;
+		System.out.println("TIMEOUT ");
 	}
 
 	public static void main(String[] args) {

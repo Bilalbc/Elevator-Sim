@@ -181,6 +181,7 @@ public class Scheduler {
 		{
 			System.out.println("Elevator " + elevatorNum + " has timed out before reaching next floor...elevator shutting down");
 			this.elevatorQueue.get(elevatorNum).clear();
+			System.out.println("cleared");
 		}
 		
 		// Update current floor and current state of called elevator
@@ -216,7 +217,6 @@ public class Scheduler {
 
 		int startFloor = 0;
 		int destFloor = 0;
-
 		if (messageQueue.size() != 0) { // Logic to get destinations for elevator, check if there are messages available
 			// Get start and destination floor of the request
 
@@ -275,7 +275,6 @@ public class Scheduler {
 			size = elevatorQueue.get(closestElevator).size();
 			
 			this.destinationFloor.get(closestElevator).add(0, destFloor);
-			System.out.println("ADDING " + destFloor);
 			this.messageQueue.remove(MESSAGE_BUFFER_FIRST_INDEX);
 
 			// if elevator is moving down, sort in descending order
