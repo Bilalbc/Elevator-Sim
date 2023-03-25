@@ -133,28 +133,23 @@ public class Elevator implements Runnable {
 	 * determine when it should stop to drop off/pick up people.
 	 */
 	public void run() {
-		
+
 		Thread tThread = new Thread(new TimeoutTimer(this), "Timer");
 		tThread.start();
 
-		while (true) {
+		while (!Thread.currentThread().isInterrupted()) {
 			try {
-				
-				//If timeout occurs, break out and end the thread.
-				if (Thread.currentThread().isInterrupted())
-				{
-					break;
-				}
-				
-				//Interrupt timer because next floor was successfully reached.
-				tThread.interrupt();
-				
 				// Lets the scheduler know which floor it is on and its state
 				sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), true);
-								
-				Thread.sleep(2000);
+
 				// If the elevator has reached its destination or does not have one(0)
 				sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), false);
+
+				// If timeout occurs, break out and end the thread.
+				if (currentState == ElevatorStates.TIMEOUT) {
+					Thread.currentThread().interrupt();
+					continue;
+				}
 
 				if (destination == currentFloor && currentState != ElevatorStates.DOORSCLOSED) {
 					currentState = ElevatorStates.STOPPED;
@@ -168,7 +163,10 @@ public class Elevator implements Runnable {
 					this.currentState = ElevatorStates.DOORSCLOSED; // Set to doors closed
 				}
 
+				// Interrupt timer because next floor was successfully reached.
+				tThread.interrupt();
 				if (destination != 0) {
+
 					if (destination > currentFloor) { // check if the elevator needs to move up or down
 						currentState = ElevatorStates.MOVINGUP;
 					} else if (destination < currentFloor) {
@@ -176,7 +174,7 @@ public class Elevator implements Runnable {
 					} else {
 						System.out.println("Elevator" + assignedNum + " is already on destination floor");
 					}
-					Thread.sleep(1000);
+					Thread.sleep(4200);
 					if (currentState.equals(ElevatorStates.MOVINGUP)) {
 						currentFloor++;
 					}
@@ -184,7 +182,8 @@ public class Elevator implements Runnable {
 						currentFloor--;
 					}
 				}
-				System.out.println("Elevator " + assignedNum + " is on floor " + currentFloor + ". Destination is " + destination);
+				System.out.println(
+						"Elevator " + assignedNum + " is on floor " + currentFloor + ". Destination is " + destination);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -218,11 +217,9 @@ public class Elevator implements Runnable {
 	public ElevatorStates getcurrentState() {
 		return currentState;
 	}
-	
-	public void setTimeout()
-	{
+
+	public void setTimeout() {
 		this.currentState = ElevatorStates.TIMEOUT;
-		Thread.currentThread().interrupt();
 	}
 
 	public static void main(String[] args) {

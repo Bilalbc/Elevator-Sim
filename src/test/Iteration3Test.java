@@ -129,13 +129,13 @@ public class Iteration3Test {
 		Thread eh4 = new Thread(new ElevatorHandler(sch, 72), "3");
 
 		e1.start();
-		e2.start();
-		e3.start();
-		e4.start();
+//		e2.start();
+//		e3.start();
+//		e4.start();
 		eh1.start();
-		eh2.start();
-		eh3.start();
-		eh4.start();
+//		eh2.start();
+//		eh3.start();
+//		eh4.start();
 
 		try {
 			Scanner reader = new Scanner(algorithmTestFile);
@@ -151,11 +151,11 @@ public class Iteration3Test {
 			e.printStackTrace();
 		}
 
-		while (e1.isAlive()) {
+		while (!e1.isInterrupted()) {
 			try {
 				Thread.sleep(500);
 
-				System.out.println(sch.getElevatorQueue());
+				System.out.println(sch.getElevatorQueue().get(0));
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
