@@ -9,7 +9,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 
 /**
- * @author Akshay V., Kousha Motazedian, Matthew Parker
+ * @author Akshay V., Kousha Motazedian, Matthew Parker, Mohamed Kaddour
  * @Date: 2023-03-09
  * @Version 3.0
  *
