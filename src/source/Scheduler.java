@@ -61,7 +61,7 @@ public class Scheduler {
 				Arrays.asList(Elevator.ElevatorStates.DOORSCLOSED, Elevator.ElevatorStates.DOORSCLOSED,
 						Elevator.ElevatorStates.DOORSCLOSED, Elevator.ElevatorStates.DOORSCLOSED));
 		this.elevatorQueue = new HashMap<>();
-		
+
 		this.elevatorQueue.put(ELEVATOR1, new ArrayList<Integer>());
 		this.elevatorQueue.put(ELEVATOR2, new ArrayList<Integer>());
 		this.elevatorQueue.put(ELEVATOR3, new ArrayList<Integer>());
@@ -124,10 +124,12 @@ public class Scheduler {
 		this.states = SchedulerStates.SENDING; // SENDING INFORMATIO
 
 		// Get the next destination and give it to the elevator
-		int reply = this.elevatorQueue.get(elevatorThreadNum).get(ELEVATOR_QUEUE_FIRST_INDEX); 
-		
-		// if the elevator has arrived at its destination, remove the destination from the elevator's queue
-		if(elevatorFloors.get(elevatorThreadNum) == elevatorQueue.get(elevatorThreadNum).get(ELEVATOR_QUEUE_FIRST_INDEX)) {
+		int reply = this.elevatorQueue.get(elevatorThreadNum).get(ELEVATOR_QUEUE_FIRST_INDEX);
+
+		// if the elevator has arrived at its destination, remove the destination from
+		// the elevator's queue
+		if (elevatorFloors.get(elevatorThreadNum) == elevatorQueue.get(elevatorThreadNum)
+				.get(ELEVATOR_QUEUE_FIRST_INDEX)) {
 			elevatorQueue.get(elevatorThreadNum).remove(ELEVATOR_QUEUE_FIRST_INDEX);
 		}
 
@@ -220,12 +222,12 @@ public class Scheduler {
 				boolean up = (startFloor - destFloor) < 0;
 
 				// Checks to see if the elevator is able to take on said request
-				if ((requestUp && startFloorAbove) || (requestDown && startFloorBelow) || (startFloorEquals && ((up && movingUp) || (!up && movingDown) ))
+				if ((requestUp && startFloorAbove) || (requestDown && startFloorBelow)
+						|| (startFloorEquals && ((up && movingUp) || (!up && movingDown)))
 						|| (doorsClosed && elevatorQueue.get(i).isEmpty())) {
-					
-					
+
 					validElevators.add(i);
-					valid = true;	
+					valid = true;
 				}
 			}
 		}
@@ -245,42 +247,41 @@ public class Scheduler {
 					closestElevator = validElevators.get(i);
 				}
 			}
-			
+
 			int size = elevatorQueue.get(closestElevator).size();
-			if(size != 1) {
+			if (size != 1) {
 				this.elevatorQueue.get(closestElevator).add(0, destFloor);
 				this.elevatorQueue.get(closestElevator).add(0, startFloor);
-			}
-			else {
+			} else {
 				this.elevatorQueue.get(closestElevator).add(startFloor);
 				this.elevatorQueue.get(closestElevator).add(destFloor);
 			}
-			
+
 			size = elevatorQueue.get(closestElevator).size();
 			this.messageQueue.remove(MESSAGE_BUFFER_FIRST_INDEX);
-			
+
 			// if elevator is moving down, sort in descending order
-			if(elevatorStates.get(closestElevator) == ElevatorStates.MOVINGDOWN) {
-				if((size > 2) && (elevatorQueue.get(closestElevator).get(size - 2) - elevatorQueue.get(closestElevator).get(size - 1) < 0)) {
+			if (elevatorStates.get(closestElevator) == ElevatorStates.MOVINGDOWN) {
+				if ((size > 2) && (elevatorQueue.get(closestElevator).get(size - 2)
+						- elevatorQueue.get(closestElevator).get(size - 1) < 0)) {
 					Collections.reverse(elevatorQueue.get(closestElevator).subList(0, size - 3));
-				}
-				else if((size > 2) && (elevatorQueue.get(closestElevator).get(0) - elevatorQueue.get(closestElevator).get(1) < 0)) {
+				} else if ((size > 2) && (elevatorQueue.get(closestElevator).get(0)
+						- elevatorQueue.get(closestElevator).get(1) < 0)) {
 					Collections.reverse(elevatorQueue.get(closestElevator).subList(2, size - 1));
-				}
-				else {
+				} else {
 					this.elevatorQueue.get(closestElevator).sort(Collections.reverseOrder());
 				}
-			} 
-			// if elevator is moving up, sort in ascending order 
+			}
+			// if elevator is moving up, sort in ascending order
 			else if (elevatorStates.get(closestElevator) == ElevatorStates.MOVINGUP) {
-				
-				if((size > 2) && (elevatorQueue.get(closestElevator).get(size - 2) - elevatorQueue.get(closestElevator).get(size - 1) < 0)) {
+
+				if ((size > 2) && (elevatorQueue.get(closestElevator).get(size - 2)
+						- elevatorQueue.get(closestElevator).get(size - 1) < 0)) {
 					Collections.reverse(elevatorQueue.get(closestElevator).subList(0, size - 3));
-				}
-				else if((size > 2) && (elevatorQueue.get(closestElevator).get(0) - elevatorQueue.get(closestElevator).get(1) < 0)) {
+				} else if ((size > 2) && (elevatorQueue.get(closestElevator).get(0)
+						- elevatorQueue.get(closestElevator).get(1) < 0)) {
 					Collections.reverse(elevatorQueue.get(closestElevator).subList(2, size - 1));
-				}
-				else {
+				} else {
 					Collections.sort(elevatorQueue.get(closestElevator));
 				}
 			}
