@@ -1,7 +1,7 @@
 /**
  * @Author: Mohamed Kaddour
- * @Date: 2023-03-11
- * @Version 3.0
+ * @Date: 2023-03-25
+ * @Version 4.0
  * 
  * Interface thread to interact with the Floor system. Takes the message and then sends and receives the reply message from the scheduler. 
  * Sends an ack to Floor subsystem and waits to see that it's ready to receive. 

@@ -1,17 +1,20 @@
 package source;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.util.ArrayList;
 
 /**
  * @author Akshay V., Kousha Motazedian, Matthew Parker
- * @Date: 2023-03-09
- * @Version 3.0
+ * @Date: 2023-03-25
+ * @Version 4.0
  *
  *          An Elevator class that receives floor requests from the scheduler
  *          which indicates the order in which the elevator should pick up/drop
@@ -25,10 +28,19 @@ public class Elevator implements Runnable {
 	private int assignedNum;
 	private int destination = 0; // current destination floor, 0 means no destination at the moment
 	private int handlerPort;
+	private boolean carryingPassengers;
 	private DatagramSocket sendAndReceive;
 
+	private boolean[] lightsGrid;
+
+	private static final int NUM_FLOORS = 10;
+	private static final int TIME_TO_MOVE = 4083;
+	private static final int TIME_DOORS = 1000;
+	private static final int MAX_DATA_SIZE = 250;
+	
+	
 	public static enum ElevatorStates {
-		DOORSOPEN, DOORSCLOSED, MOVINGUP, MOVINGDOWN, STOPPED
+		DOORSOPEN, DOORSCLOSED, MOVINGUP, MOVINGDOWN, STOPPED, TIMEOUT, STUCKOPEN, STUCKCLOSED
 	};
 
 	private ElevatorStates currentState;
@@ -50,6 +62,8 @@ public class Elevator implements Runnable {
 		this.assignedNum = assignedNum;
 		this.currentState = ElevatorStates.DOORSCLOSED; // Elevator starts at a closed state
 		this.handlerPort = portNum;
+		this.carryingPassengers = false;
+		this.lightsGrid = new boolean[NUM_FLOORS];
 	}
 
 	private void sendAndGetMessage(PassStateEvent pse, boolean send) {
@@ -83,17 +97,43 @@ public class Elevator implements Runnable {
 				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(), handlerPort);
 				sendAndReceive.send(sending);
 
-				byte receivingData[] = new byte[50];
-				// Get destination floor from handler
+				byte receivingData[] = new byte[MAX_DATA_SIZE];
+				// Get destination queue from handler
+
 				receiving = new DatagramPacket(receivingData, receivingData.length);
 				sendAndReceive.receive(receiving);
 
-				if (receivingData[0] != 0) {
-					this.destination = receivingData[0];
+				// unpack into an object
+				ByteArrayInputStream byteStream = new ByteArrayInputStream(receiving.getData());
+
+				ObjectInputStream objectStream = new ObjectInputStream(byteStream);
+
+				ArrayList<Integer> temp = new ArrayList<Integer>();
+				
+				try {
+					temp = (ArrayList<Integer>) objectStream.readObject();
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
+				}
+
+				if(carryingPassengers) {
+					for(int i = 1; i < temp.size(); i++) {
+						if(i > 0) {
+							lightsGrid[temp.get(i-1)] = true;											
+						}
+					}
+				}
+
+				byteStream.close();
+				objectStream.close();
+				
+				if(temp.size() > 0) {
+					this.destination = temp.get(0);
 				}
 			}
 
 		} catch (IOException e) {
+			e.printStackTrace();
 			System.exit(1);
 		}
 
@@ -108,27 +148,51 @@ public class Elevator implements Runnable {
 	 */
 	public void run() {
 
-		while (true) {
+		Thread tThread = new Thread(new TimeoutTimer(this), "Timer");
+		tThread.start();
+
+		while (!Thread.currentThread().isInterrupted()) {
 			try {
+				checkDoorsStuck();
 				// Lets the scheduler know which floor it is on and its state
 				sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), true);
-				Thread.sleep(2000);
+
 				// If the elevator has reached its destination or does not have one(0)
 				sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), false);
 
+				// If timeout occurs, break out and end the thread.
+				if (currentState == ElevatorStates.TIMEOUT) {
+					Thread.currentThread().interrupt();
+					Thread.sleep(200);
+					
+					sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), true);
+					continue;
+				}
+
+				Thread.sleep(1000);
 				if (destination == currentFloor && currentState != ElevatorStates.DOORSCLOSED) {
 					currentState = ElevatorStates.STOPPED;
-					Thread.sleep(1000);
+					Thread.sleep(TIME_DOORS);
 					// If there is a destination request for the current floor, the doors open
 					currentState = ElevatorStates.DOORSOPEN;
 
 					System.out.println(
 							"Elevator " + assignedNum + ": Letting People in and out on floor " + currentFloor + "!");
-					Thread.sleep(1000);
+					
+//					if(!carryingPassengers) {
+//						carryingPassengers = true;
+//					} else if (carryingPassengers && !hasDestinations()) {
+//						carryingPassengers = false;
+//					}
+					lightsGrid[currentFloor-1] = false;
+					Thread.sleep(TIME_DOORS);
 					this.currentState = ElevatorStates.DOORSCLOSED; // Set to doors closed
 				}
 
+				// Interrupt timer because next floor was successfully reached.
+				tThread.interrupt();
 				if (destination != 0) {
+
 					if (destination > currentFloor) { // check if the elevator needs to move up or down
 						currentState = ElevatorStates.MOVINGUP;
 					} else if (destination < currentFloor) {
@@ -136,7 +200,7 @@ public class Elevator implements Runnable {
 					} else {
 						System.out.println("Elevator" + assignedNum + " is already on destination floor");
 					}
-					Thread.sleep(1000);
+					Thread.sleep(TIME_TO_MOVE);
 					if (currentState.equals(ElevatorStates.MOVINGUP)) {
 						currentFloor++;
 					}
@@ -144,14 +208,53 @@ public class Elevator implements Runnable {
 						currentFloor--;
 					}
 				}
-				System.out.println("Elevator " + assignedNum + " is on floor " + currentFloor + ". Destination is " + destination);
+				System.out.println(
+						"Elevator " + assignedNum + " is on floor " + currentFloor + ". Destination is " + destination);
+
+				for(boolean i : lightsGrid) {
+					System.out.print(i + ", ");
+				}
+				System.out.println();
+				
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
 
 	}
+	
+	/**
+	 * Helper method that checks if the elevator doors are in a stuck state 
+	 * If the doors are stuck, gracefully fix and continue
+	 * 
+	 * @throws InterruptedException
+	 */
+	private void checkDoorsStuck() throws InterruptedException{
+		//If the elevator is stuck, the state will be modified to either DOORSOPEN or DOORSCLOSED respectively. 
+		if (currentState == ElevatorStates.STUCKCLOSED) {
+			System.out.println("Elevator " + assignedNum + " has its doors stuck closed. Fixing...");
+			Thread.sleep(2000);
+			currentState = ElevatorStates.DOORSOPEN;
+		}
+		else if (currentState == ElevatorStates.STUCKOPEN) {
+			System.out.println("Elevator " + assignedNum + " has its doors stuck open. Fixing...");
+			Thread.sleep(2000);
+			currentState = ElevatorStates.DOORSCLOSED;
+		}
+	}
 
+	/**
+	 * Helper method to see if there are any destinations
+	 * Used to determine if there are any passengers on board
+	 * 
+	 * @return boolean : If passengers are on board 
+	 */
+	private boolean hasDestinations() {
+		for(boolean i : lightsGrid) {
+			if(i) return true;
+		}
+		return false;
+	}
 	/**
 	 * Getter method to access the currentFloor of the Elevator
 	 * 
@@ -177,6 +280,15 @@ public class Elevator implements Runnable {
 	 */
 	public ElevatorStates getcurrentState() {
 		return currentState;
+	}
+
+	public void setTimeout() {
+		this.currentState = ElevatorStates.TIMEOUT;
+	}
+	
+	//For testing purposes
+	public void setState(Elevator.ElevatorStates state) {
+		this.currentState = state;
 	}
 
 	public static void main(String[] args) {
