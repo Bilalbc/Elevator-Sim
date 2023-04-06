@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import source.Elevator.ElevatorStates;
@@ -36,6 +37,8 @@ public class Scheduler {
 	private ArrayList<Message> replyQueue;
 	private ArrayList<Integer> elevatorFloors;
 	private ArrayList<Elevator.ElevatorStates> elevatorStates;
+	
+    private List<ElevatorView> views;
 
 	private boolean closed = false;
 	private boolean requestsComplete = false;
@@ -73,7 +76,16 @@ public class Scheduler {
 		this.destinationFloor.put(ELEVATOR4, new ArrayList<Integer>());
 
 		this.states = SchedulerStates.WAITING;
+		
+		this.views = new ArrayList<>();
+		
+		ElevatorGUI eg = new ElevatorGUI(this);
 	}
+	
+    public void addElevatorView(ElevatorView ev)
+    {
+        this.views.add(ev);
+    }
 
 	/**
 	 * Synchronized method that takes in a message and, if the scheduler is not in a
