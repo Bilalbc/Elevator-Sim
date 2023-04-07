@@ -34,6 +34,7 @@ public class Message implements Serializable {
 		this.direction = direction;
 		this.startFloor = startFloor;
 		this.destinationFloor = destinationFloor;
+		this.returnMessage = "";
 	}
 
 	/**
