@@ -14,8 +14,8 @@ public class ElevatorGUI extends JFrame implements ElevatorView {
 	
     private final static int FRAME_WIDTH = 1500;
     private final static int FRAME_HEIGHT = 980;
-    private final static int GRID_X = 23;
-    private final static int GRID_Y = 5;
+    private final static int GRID_X = 22;
+    private final static int GRID_Y = 4;
     
     //Panels
     private JPanel floorsPanel;
@@ -23,6 +23,8 @@ public class ElevatorGUI extends JFrame implements ElevatorView {
     private JPanel statePanel;
     
     private JLabel[][]floorCoordinates;
+    private JLabel[][]lightCoordinates;
+    private JLabel[]states;
 	
 	public ElevatorGUI(Scheduler sch)
 	{
@@ -30,6 +32,8 @@ public class ElevatorGUI extends JFrame implements ElevatorView {
 	    this.setBackground(Color.red);
 		sch.addElevatorView(this);
 		this.floorCoordinates = new JLabel[GRID_X][GRID_Y];
+		this.lightCoordinates = new JLabel[GRID_X][GRID_Y];
+		this.states = new JLabel[GRID_Y];
 		initializeFrame();
 		initializeFloors();
 		initializeLight();
@@ -51,11 +55,10 @@ public class ElevatorGUI extends JFrame implements ElevatorView {
     	this.floorsPanel.setOpaque(true);
     	this.floorsPanel.setBackground(Color.CYAN);
     	this.floorsPanel.setLayout(new GridLayout(23, 4));
-    	for (int i = 22; i > 0; i--)
+    	for (int i = 21; i >= 0; i--)
     	{
     		JLabel floor = new JLabel();
-    		floor.setText("FLOOR " + i);
-    		this.floorCoordinates[i][0] = floor;
+    		floor.setText("FLOOR " + (i+1));
     		this.floorsPanel.add(floor);
     		
     		for (int j = 0; j < 4; j++)
@@ -64,41 +67,90 @@ public class ElevatorGUI extends JFrame implements ElevatorView {
 	    		elevator.setOpaque(true);
 	    		elevator.setBackground(Color.CYAN);
 	    		elevator.setText(" ");
-	    		this.floorCoordinates[i][j+1] = elevator;
+	    		this.floorCoordinates[i][j] = elevator;
 	    		this.floorsPanel.add(elevator);
     		}
     	}
     	    	    	
     	this.add(this.floorsPanel, BorderLayout.CENTER);
     	
-    	this.floorCoordinates[21][1].setText("ELEVATOR 1 HERE");
-    	this.floorCoordinates[21][1].setBackground(Color.gray);
+    	/*
+    	this.floorCoordinates[21][0].setText("ELEVATOR 1 HERE");
+    	this.floorCoordinates[21][0].setBackground(Color.gray);
     	
-    	this.floorCoordinates[11][2].setText("ELEVATOR 2 HERE");
-    	this.floorCoordinates[11][2].setBackground(Color.red);
+    	this.floorCoordinates[11][1].setText("ELEVATOR 2 HERE");
+    	this.floorCoordinates[11][1].setBackground(Color.red);
+    	
+    	this.floorCoordinates[21][2].setText("ELEVATOR 3 HERE");
+    	this.floorCoordinates[21][2].setBackground(Color.green);
+    	
+    	this.floorCoordinates[0][3].setText("ELEVATOR 4 HERE");
+    	this.floorCoordinates[0][3].setBackground(Color.pink); */
     }
     
     private void initializeLight()
     {
     	this.lightPanel = new JPanel();
-    	JLabel lights = new JLabel("LIGHTS");
-    	this.lightPanel.add(lights);
+    	this.lightPanel.setOpaque(true);
+    	this.lightPanel.setBackground(Color.pink);
     	
+    	this.lightPanel.setLayout(new GridLayout(23, 4));
+    	
+    	for (int i = 0; i < 4; i++)
+    	{
+    		JLabel l = new JLabel("Elevator " + (i+1) + " lights    ");
+    		this.lightPanel.add(l);
+    	}
+	
+        for (int j = 0 ; j < 22; j++)
+        {
+        	for (int k = 0; k < 4; k++)
+        	{
+        		JLabel l = new JLabel();
+        		l.setOpaque(true);
+        		l.setText("F " + (j+1));
+        		this.lightCoordinates[j][k] = l;
+        		this.lightPanel.add(l);
+        	}
+        }
+	
     	this.add(this.lightPanel, BorderLayout.LINE_START);
+    	
+    	//this.lightCoordinates[18][3].setBackground(Color.yellow);
     }
-    
+        
     private void initializeState()
     {
-    	this.statePanel = new JPanel();
-    	JLabel state = new JLabel("ELEVATOR STATE");
-    	this.statePanel.add(state);
+    	this.statePanel = new JPanel(new GridLayout(1, 8));
+    	
+    	for (int i = 0; i < 4; i++)
+    	{
+    		JLabel stateLabel = new JLabel("ELEVATOR " + (i+1) + " STATE");
+    		JLabel state = new JLabel("OPEN");
+    		this.states[i] = state;
+    		this.statePanel.add(stateLabel);
+    		this.statePanel.add(state);
+    	}
     	
     	this.add(this.statePanel, BorderLayout.PAGE_START);
+    	
+    	//this.states[2].setText("MOVING");
     }
 
 	@Override
-	public void update(ElevatorUpdateEvent eue) 
+	public void updateFloor() 
 	{
+		
+	}
+
+	@Override
+	public void updateLight() {
+		
+	}
+
+	@Override
+	public void updateState() {
+		
 		
 	}
 	

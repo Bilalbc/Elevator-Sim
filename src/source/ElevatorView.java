@@ -2,5 +2,9 @@ package source;
 
 public interface ElevatorView {
 	
-	public void update(ElevatorUpdateEvent eue);
+	public void updateFloor();
+	
+	public void updateLight();
+	
+	public void updateState();
 }
