@@ -15,7 +15,7 @@ public class ElevatorGUI extends JFrame implements ElevatorView {
     private final static int FRAME_WIDTH = 1500;
     private final static int FRAME_HEIGHT = 980;
     private final static int GRID_X = 23;
-    private final static int GRID_Y = 2;
+    private final static int GRID_Y = 5;
     
     //Panels
     private JPanel floorsPanel;
@@ -42,7 +42,7 @@ public class ElevatorGUI extends JFrame implements ElevatorView {
         this.setLayout(new BorderLayout());
         this.setSize(FRAME_WIDTH, FRAME_HEIGHT);
         this.setVisible(true);
-        this.setResizable(false);
+        this.setResizable(true);
     }
     
     private void initializeFloors()
@@ -50,7 +50,7 @@ public class ElevatorGUI extends JFrame implements ElevatorView {
     	this.floorsPanel = new JPanel();
     	this.floorsPanel.setOpaque(true);
     	this.floorsPanel.setBackground(Color.CYAN);
-    	this.floorsPanel.setLayout(new GridLayout(23, 1));
+    	this.floorsPanel.setLayout(new GridLayout(23, 4));
     	for (int i = 22; i > 0; i--)
     	{
     		JLabel floor = new JLabel();
@@ -58,15 +58,24 @@ public class ElevatorGUI extends JFrame implements ElevatorView {
     		this.floorCoordinates[i][0] = floor;
     		this.floorsPanel.add(floor);
     		
-    		JLabel elevator = new JLabel();
-    		elevator.setText("");
-    		this.floorCoordinates[i][1] = elevator;
-    		this.floorsPanel.add(elevator);
+    		for (int j = 0; j < 4; j++)
+    		{
+	    		JLabel elevator = new JLabel();
+	    		elevator.setOpaque(true);
+	    		elevator.setBackground(Color.CYAN);
+	    		elevator.setText(" ");
+	    		this.floorCoordinates[i][j+1] = elevator;
+	    		this.floorsPanel.add(elevator);
+    		}
     	}
     	    	    	
     	this.add(this.floorsPanel, BorderLayout.CENTER);
     	
-    	this.floorCoordinates[21][1].setText("ELEVATOR HERE");
+    	this.floorCoordinates[21][1].setText("ELEVATOR 1 HERE");
+    	this.floorCoordinates[21][1].setBackground(Color.gray);
+    	
+    	this.floorCoordinates[11][2].setText("ELEVATOR 2 HERE");
+    	this.floorCoordinates[11][2].setBackground(Color.red);
     }
     
     private void initializeLight()
