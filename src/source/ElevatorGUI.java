@@ -144,9 +144,11 @@ public class ElevatorGUI extends JFrame implements ElevatorView {
     	for (int i = 0; i < 22; i++)
     	{
     		this.floorCoordinates[i][elevatorNum].setBackground(Color.blue);
+    		this.floorCoordinates[i][elevatorNum].setText("");;
     	}
     	
 		this.floorCoordinates[currentFloor][elevatorNum].setBackground(Color.gray);
+		this.floorCoordinates[currentFloor][elevatorNum].setText("ELEVATOR " + (elevatorNum + 1));
     }
 
 	@Override
