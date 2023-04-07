@@ -10,6 +10,8 @@ import javax.swing.JPanel;
 
 import javax.swing.WindowConstants;
 
+import source.Elevator.ElevatorStates;
+
 public class ElevatorGUI extends JFrame implements ElevatorView {
 	
     private final static int FRAME_WIDTH = 1500;
@@ -136,12 +138,16 @@ public class ElevatorGUI extends JFrame implements ElevatorView {
     	
     	//this.states[2].setText("MOVING");
     }
-
-	@Override
-	public void updateFloor() 
-	{
-		
-	}
+    
+    private void moveElevator(int elevatorNum, int currentFloor)
+    {
+    	for (int i = 0; i < 22; i++)
+    	{
+    		this.floorCoordinates[i][elevatorNum].setBackground(Color.blue);
+    	}
+    	
+		this.floorCoordinates[currentFloor][elevatorNum].setBackground(Color.gray);
+    }
 
 	@Override
 	public void updateLight() {
@@ -149,9 +155,9 @@ public class ElevatorGUI extends JFrame implements ElevatorView {
 	}
 
 	@Override
-	public void updateState() {
-		
-		
+	public void updateFloorAndState(int currentFloor, int elevatorNum, ElevatorStates elevatorState) {
+		moveElevator(currentFloor-1, elevatorNum-1);
+		this.states[elevatorNum-1].setText(elevatorState.toString());
 	}
-	
+
 }

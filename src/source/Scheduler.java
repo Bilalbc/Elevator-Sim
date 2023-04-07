@@ -179,6 +179,11 @@ public class Scheduler {
 		int currentFloor = pse.getCurrentFloor();
 		Elevator.ElevatorStates elevatorState = pse.getCurrentState();
 		int elevatorNum = pse.getAssignedNum();
+		
+		for (ElevatorView ev : this.views)
+		{
+			ev.updateFloorAndState(currentFloor, elevatorNum, elevatorState);
+		}
 
 		while (states != SchedulerStates.WAITING) { // If the scheduler is not in the WAITING state, thread must wait
 			// until it is
