@@ -24,18 +24,20 @@ public class ElevatorGUI extends JFrame implements ElevatorView {
     private JPanel lightPanel;
     private JPanel statePanel;
     
-    private JLabel[][]floorCoordinates;
+    private JLabel[][]elevatorCoordinates;
     private JLabel[][]lightCoordinates;
     private JLabel[]states;
+    private JLabel[]floorCoordinates;
 	
 	public ElevatorGUI(Scheduler sch)
 	{
 		super("Elevator");
 	    this.setBackground(Color.red);
 		sch.addElevatorView(this);
-		this.floorCoordinates = new JLabel[GRID_X][GRID_Y];
+		this.elevatorCoordinates = new JLabel[GRID_X][GRID_Y];
 		this.lightCoordinates = new JLabel[GRID_X][GRID_Y];
 		this.states = new JLabel[GRID_Y];
+		this.floorCoordinates = new JLabel[GRID_X];
 		initializeFrame();
 		initializeFloors();
 		initializeLight();
@@ -60,7 +62,10 @@ public class ElevatorGUI extends JFrame implements ElevatorView {
     	for (int i = 21; i >= 0; i--)
     	{
     		JLabel floor = new JLabel();
+    		floor.setOpaque(true);
+    		floor.setBackground(Color.CYAN);
     		floor.setText("FLOOR " + (i+1));
+    		this.floorCoordinates[i] = floor;
     		this.floorsPanel.add(floor);
     		
     		for (int j = 0; j < 4; j++)
@@ -69,25 +74,13 @@ public class ElevatorGUI extends JFrame implements ElevatorView {
 	    		elevator.setOpaque(true);
 	    		elevator.setBackground(Color.CYAN);
 	    		elevator.setText(" ");
-	    		this.floorCoordinates[i][j] = elevator;
+	    		this.elevatorCoordinates[i][j] = elevator;
 	    		this.floorsPanel.add(elevator);
     		}
     	}
     	    	    	
     	this.add(this.floorsPanel, BorderLayout.CENTER);
     	
-    	/*
-    	this.floorCoordinates[21][0].setText("ELEVATOR 1 HERE");
-    	this.floorCoordinates[21][0].setBackground(Color.gray);
-    	
-    	this.floorCoordinates[11][1].setText("ELEVATOR 2 HERE");
-    	this.floorCoordinates[11][1].setBackground(Color.red);
-    	
-    	this.floorCoordinates[21][2].setText("ELEVATOR 3 HERE");
-    	this.floorCoordinates[21][2].setBackground(Color.green);
-    	
-    	this.floorCoordinates[0][3].setText("ELEVATOR 4 HERE");
-    	this.floorCoordinates[0][3].setBackground(Color.pink); */
     }
     
     private void initializeLight()
@@ -118,7 +111,6 @@ public class ElevatorGUI extends JFrame implements ElevatorView {
 	
     	this.add(this.lightPanel, BorderLayout.LINE_START);
     	
-    	//this.lightCoordinates[18][3].setBackground(Color.yellow);
     }
         
     private void initializeState()
@@ -136,19 +128,28 @@ public class ElevatorGUI extends JFrame implements ElevatorView {
     	
     	this.add(this.statePanel, BorderLayout.PAGE_START);
     	
-    	//this.states[2].setText("MOVING");
     }
     
     private void moveElevator(int elevatorNum, int currentFloor)
     {
     	for (int i = 0; i < 22; i++)
     	{
-    		this.floorCoordinates[i][elevatorNum].setBackground(Color.blue);
-    		this.floorCoordinates[i][elevatorNum].setText("");;
+    		this.elevatorCoordinates[i][elevatorNum].setBackground(Color.cyan);
+    		this.elevatorCoordinates[i][elevatorNum].setText("");;
     	}
     	
-		this.floorCoordinates[currentFloor][elevatorNum].setBackground(Color.gray);
-		this.floorCoordinates[currentFloor][elevatorNum].setText("ELEVATOR " + (elevatorNum + 1));
+		this.elevatorCoordinates[currentFloor][elevatorNum].setBackground(Color.gray);
+		this.elevatorCoordinates[currentFloor][elevatorNum].setText("ELEVATOR " + (elevatorNum + 1));
+    }
+    
+    private void lightFloor(int floor)
+    {
+    	for (int i = 0; i < 22; i++)
+    	{
+    		this.floorCoordinates[i].setBackground(Color.cyan);
+    	}
+    	    	
+		this.floorCoordinates[floor].setBackground(Color.yellow);
     }
 
 	@Override
@@ -158,8 +159,13 @@ public class ElevatorGUI extends JFrame implements ElevatorView {
 
 	@Override
 	public void updateFloorAndState(int currentFloor, int elevatorNum, ElevatorStates elevatorState) {
-		moveElevator(currentFloor-1, elevatorNum-1);
+		moveElevator(elevatorNum-1, currentFloor-1);
 		this.states[elevatorNum-1].setText(elevatorState.toString());
+	}
+
+	@Override
+	public void updateFloorRequest(int startFloor) {
+		lightFloor(startFloor-1);
 	}
 
 }

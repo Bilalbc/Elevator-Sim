@@ -102,6 +102,11 @@ public class Scheduler {
 				System.err.println(e);
 			}
 		}
+		
+		for (ElevatorView ev : this.views)
+		{
+			ev.updateFloorRequest(message.startFloor());
+		}
 
 		this.states = SchedulerStates.RECEIVING; // Set to RECEIVING information
 
@@ -179,7 +184,7 @@ public class Scheduler {
 		int currentFloor = pse.getCurrentFloor();
 		Elevator.ElevatorStates elevatorState = pse.getCurrentState();
 		int elevatorNum = pse.getAssignedNum();
-		
+				
 		for (ElevatorView ev : this.views)
 		{
 			ev.updateFloorAndState(currentFloor, elevatorNum, elevatorState);
