@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Iterator;
 import java.util.Set;
 
 import source.Elevator.ElevatorStates;
@@ -50,7 +51,8 @@ public class Scheduler {
 	private SchedulerStates states;
 
 	private HashMap<Integer, ArrayList<Integer>> elevatorQueue;
-	private HashMap<Integer, ArrayList<Integer>> destinationFloor;
+	//private HashMap<Integer, ArrayList<Integer>> destinationFloor;
+	private HashMap<Integer, ArrayList<Message>> elevatorRequests;
 	/**
 	 * Constructor for class Scheduler. Initializes messageQueue, replyQueue,
 	 * elevatorFloors, elevatorStates and the elevatorQueue for all elevators.
@@ -63,17 +65,25 @@ public class Scheduler {
 				Arrays.asList(Elevator.ElevatorStates.DOORSCLOSED, Elevator.ElevatorStates.DOORSCLOSED,
 						Elevator.ElevatorStates.DOORSCLOSED, Elevator.ElevatorStates.DOORSCLOSED));
 		this.elevatorQueue = new HashMap<>();
-		this.destinationFloor = new HashMap<>();
+		//this.destinationFloor = new HashMap<>();
+		this.elevatorRequests = new HashMap<>();
 		
 		this.elevatorQueue.put(ELEVATOR1, new ArrayList<Integer>());
 		this.elevatorQueue.put(ELEVATOR2, new ArrayList<Integer>());
 		this.elevatorQueue.put(ELEVATOR3, new ArrayList<Integer>());
 		this.elevatorQueue.put(ELEVATOR4, new ArrayList<Integer>());
 		
-		this.destinationFloor.put(ELEVATOR1, new ArrayList<Integer>());
-		this.destinationFloor.put(ELEVATOR2, new ArrayList<Integer>());
-		this.destinationFloor.put(ELEVATOR3, new ArrayList<Integer>());
-		this.destinationFloor.put(ELEVATOR4, new ArrayList<Integer>());
+		//this.destinationFloor.put(ELEVATOR1, new ArrayList<Integer>());
+		//this.destinationFloor.put(ELEVATOR2, new ArrayList<Integer>());
+		//this.destinationFloor.put(ELEVATOR3, new ArrayList<Integer>());
+		//this.destinationFloor.put(ELEVATOR4, new ArrayList<Integer>());
+		
+		this.elevatorRequests.put(ELEVATOR1, new ArrayList<Message>());
+		this.elevatorRequests.put(ELEVATOR2, new ArrayList<Message>());
+		this.elevatorRequests.put(ELEVATOR3, new ArrayList<Message>());
+		this.elevatorRequests.put(ELEVATOR4, new ArrayList<Message>());
+		
+		
 
 		this.states = SchedulerStates.WAITING;
 		
@@ -125,7 +135,7 @@ public class Scheduler {
 	 * @param none
 	 * @return Floor to be read.
 	 */
-	public synchronized ArrayList<Integer> readMessage() {
+	public synchronized int readMessage() {
 
 		// If the scheduler is not in the WAITING state, thread must wait until it is
 		while (states != SchedulerStates.WAITING) {
@@ -142,28 +152,62 @@ public class Scheduler {
 		this.states = SchedulerStates.SENDING; // SENDING INFORMATIO
 
 		
-		if (elevatorQueue.get(elevatorThreadNum).size() == 0 || destinationFloor.get(elevatorThreadNum).size() == 0) { // IF THERE ARE NO NEW DESTINATIONS
-			ArrayList<Integer> temp = new ArrayList<>();
-			temp.add(0, 0);
+		if (elevatorQueue.get(elevatorThreadNum).size() == 0) { // IF THERE ARE NO NEW DESTINATIONS
+			//ArrayList<Integer> temp = new ArrayList<>();
+			//temp.add(0, 0);
 			notifyAll();
 			
 			this.states = SchedulerStates.WAITING; // back to WAITING
 			
-			return temp;
+			return 0;
 		}
 
 		// Get the next destination and give it to the elevator
-		this.destinationFloor.get(elevatorThreadNum).add(0, elevatorQueue.get(elevatorThreadNum).get(ELEVATOR_QUEUE_FIRST_INDEX));
-		ArrayList<Integer> reply = this.destinationFloor.get(elevatorThreadNum);
+		//this.destinationFloor.get(elevatorThreadNum).add(0, elevatorQueue.get(elevatorThreadNum).get(ELEVATOR_QUEUE_FIRST_INDEX));
+	//	ArrayList<Integer> reply = this.destinationFloor.get(elevatorThreadNum);
+		
+		int reply = this.elevatorQueue.get(elevatorThreadNum).get(ELEVATOR_QUEUE_FIRST_INDEX);
 		
 		// if the elevator has arrived at its destination, remove the destination from the elevator's queue
-		if(elevatorFloors.get(elevatorThreadNum) == elevatorQueue.get(elevatorThreadNum).get(ELEVATOR_QUEUE_FIRST_INDEX)) {
+		if(elevatorFloors.get(elevatorThreadNum) == elevatorQueue.get(elevatorThreadNum).get(ELEVATOR_QUEUE_FIRST_INDEX)) { 
 			elevatorQueue.get(elevatorThreadNum).remove(ELEVATOR_QUEUE_FIRST_INDEX);
+		
+			ArrayList<Message> remove = new ArrayList<>();
+			for(Message m: this.elevatorRequests.get(elevatorThreadNum)) {
+				boolean startGone = true;
+				boolean finishGone = true;
+				for(int j : this.elevatorQueue.get(elevatorThreadNum)) {
+					if(j == m.startFloor()) {
+						startGone = false;
+					}
+					if(j == m.destinationFloor()) {
+						finishGone = false;
+					}
+				}
+				
+				String movement = "";
+				if(elevatorStates.get(elevatorThreadNum) == Elevator.ElevatorStates.MOVINGUP) {
+					movement = "UP";
+				}
+				else if(elevatorStates.get(elevatorThreadNum) == Elevator.ElevatorStates.MOVINGDOWN) {
+					movement = "DOWN";
+				}
+				else if(elevatorStates.get(elevatorThreadNum) == Elevator.ElevatorStates.DOORSCLOSED){
+					movement = "CLOSED";
+				}
+				
+				if(startGone && finishGone && (m.getDirection().equals(movement) || movement.equals("CLOSED")) ) {
+					remove.add(m);
+					
+				}
+			}
+			System.out.println(elevatorThreadNum + ": " + this.elevatorRequests.get(elevatorThreadNum));
+			this.elevatorRequests.get(elevatorThreadNum).removeAll(remove);
 		}
 
 		this.states = SchedulerStates.WAITING; // back to WAITING
 		notifyAll();
-
+		System.out.println(reply);
 		return reply;
 	}
 
@@ -295,7 +339,8 @@ public class Scheduler {
 
 			size = elevatorQueue.get(closestElevator).size();
 			
-			this.destinationFloor.get(closestElevator).add(0, destFloor);
+			//this.destinationFloor.get(closestElevator).add(0, destFloor);
+			this.elevatorRequests.get(closestElevator).add(this.messageQueue.get(MESSAGE_BUFFER_FIRST_INDEX));
 			this.messageQueue.remove(MESSAGE_BUFFER_FIRST_INDEX);
 			
 			// if elevator is moving down, sort in descending order

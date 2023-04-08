@@ -98,37 +98,13 @@ public class Elevator implements Runnable {
 				sendAndReceive.send(sending);
 
 				byte receivingData[] = new byte[MAX_DATA_SIZE];
-				// Get destination queue from handler
+				// Get destination floor from handler
 
 				receiving = new DatagramPacket(receivingData, receivingData.length);
 				sendAndReceive.receive(receiving);
-
-				// unpack into an object
-				ByteArrayInputStream byteStream = new ByteArrayInputStream(receiving.getData());
-
-				ObjectInputStream objectStream = new ObjectInputStream(byteStream);
-
-				ArrayList<Integer> temp = new ArrayList<Integer>();
-				
-				try {
-					temp = (ArrayList<Integer>) objectStream.readObject();
-				} catch (ClassNotFoundException e) {
-					e.printStackTrace();
-				}
-
-				if(carryingPassengers) {
-					for(int i = 1; i < temp.size(); i++) {
-						if(i > 0) {
-							lightsGrid[temp.get(i-1)] = true;											
-						}
-					}
-				}
-
-				byteStream.close();
-				objectStream.close();
-				
-				if(temp.size() > 0) {
-					this.destination = temp.get(0);
+ 
+				if (receivingData[0] != 0) {
+					this.destination = receivingData[0];
 				}
 			}
 

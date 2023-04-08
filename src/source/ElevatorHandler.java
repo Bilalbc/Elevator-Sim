@@ -114,14 +114,8 @@ public class ElevatorHandler implements Runnable {
 			} else {
 				// If send is false, then the reply is the actual reply from the scheduler, thus
 				// serialize reply.
-				ByteArrayOutputStream byteStream = new ByteArrayOutputStream(); // set up byte array streams to turn
-				// Message into a byte array
-				ObjectOutputStream objectStream = new ObjectOutputStream(byteStream);
-
-				objectStream.writeObject(scheduler.readMessage());
-				objectStream.flush();
-
-				replyData = byteStream.toByteArray();
+				replyData = new byte[1];
+				replyData[0] = (byte) scheduler.readMessage();
 
 				this.send = true;
 			}
