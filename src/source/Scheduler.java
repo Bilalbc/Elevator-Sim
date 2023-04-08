@@ -116,6 +116,8 @@ public class Scheduler {
 		for (ElevatorView ev : this.views)
 		{
 			ev.updateFloorRequest(message.startFloor());
+			//ev.updateLight(message.startFloor());
+			//light up start
 		}
 
 		this.states = SchedulerStates.RECEIVING; // Set to RECEIVING information
@@ -171,7 +173,7 @@ public class Scheduler {
 		// if the elevator has arrived at its destination, remove the destination from the elevator's queue
 		if(elevatorFloors.get(elevatorThreadNum) == elevatorQueue.get(elevatorThreadNum).get(ELEVATOR_QUEUE_FIRST_INDEX)) { 
 			elevatorQueue.get(elevatorThreadNum).remove(ELEVATOR_QUEUE_FIRST_INDEX);
-		
+			
 			ArrayList<Message> remove = new ArrayList<>();
 			for(Message m: this.elevatorRequests.get(elevatorThreadNum)) {
 				boolean startGone = true;
@@ -185,6 +187,22 @@ public class Scheduler {
 					}
 				}
 				
+				if (elevatorFloors.get(elevatorThreadNum) == m.startFloor())
+				{
+					for (ElevatorView ev : this.views)
+					{
+						ev.updateLight(m.destinationFloor(), elevatorThreadNum, true);
+						ev.updateLight(m.startFloor(), elevatorThreadNum, false);
+					}
+				}
+				if (elevatorFloors.get(elevatorThreadNum) == m.destinationFloor())
+				{
+					for (ElevatorView ev : this.views)
+					{
+						ev.updateLight(m.destinationFloor(), elevatorThreadNum, false);
+					}
+				}
+
 				String movement = "";
 				if(elevatorStates.get(elevatorThreadNum) == Elevator.ElevatorStates.MOVINGUP) {
 					movement = "UP";
@@ -335,6 +353,12 @@ public class Scheduler {
 			} else {
 				this.elevatorQueue.get(closestElevator).add(startFloor);
 				this.elevatorQueue.get(closestElevator).add(destFloor);
+			}
+			
+
+			for (ElevatorView ev : this.views)
+			{
+				ev.updateLight(startFloor, closestElevator, true);
 			}
 
 			size = elevatorQueue.get(closestElevator).size();
