@@ -82,8 +82,6 @@ public class Scheduler {
 		this.elevatorRequests.put(ELEVATOR2, new ArrayList<Message>());
 		this.elevatorRequests.put(ELEVATOR3, new ArrayList<Message>());
 		this.elevatorRequests.put(ELEVATOR4, new ArrayList<Message>());
-		
-		
 
 		this.states = SchedulerStates.WAITING;
 		
@@ -92,6 +90,11 @@ public class Scheduler {
 		ElevatorGUI eg = new ElevatorGUI(this);
 	}
 	
+	/**
+	 * Add elevator view to the Scheduler
+	 * 
+	 * @param ev ElevatorView
+	 * */
     public void addElevatorView(ElevatorView ev)
     {
         this.views.add(ev);
