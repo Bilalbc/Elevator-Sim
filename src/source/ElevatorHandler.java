@@ -42,7 +42,7 @@ public class ElevatorHandler implements Runnable {
 
 		try {
 			socket = new DatagramSocket(elevatorPort);
-			socket.setSoTimeout(TIMEOUT);
+//			socket.setSoTimeout(TIMEOUT);
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);

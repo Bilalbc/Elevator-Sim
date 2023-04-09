@@ -13,7 +13,7 @@ package source;
 
 public class TimeoutTimer implements Runnable {
 	
-	public static final int SLEEP_TIME = 6000;
+	public static final int SLEEP_TIME = 4500;
 	
 	private Elevator elevator;
 
@@ -43,6 +43,7 @@ public class TimeoutTimer implements Runnable {
 			}
 			
 			elevator.setTimeout();
+			break;
 		}
 	}
 

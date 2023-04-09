@@ -51,8 +51,8 @@ public class Scheduler {
 	private SchedulerStates states;
 
 	private HashMap<Integer, ArrayList<Integer>> elevatorQueue;
-	//private HashMap<Integer, ArrayList<Integer>> destinationFloor;
 	private HashMap<Integer, ArrayList<Message>> elevatorRequests;
+	
 	/**
 	 * Constructor for class Scheduler. Initializes messageQueue, replyQueue,
 	 * elevatorFloors, elevatorStates and the elevatorQueue for all elevators.
@@ -65,18 +65,12 @@ public class Scheduler {
 				Arrays.asList(Elevator.ElevatorStates.DOORSCLOSED, Elevator.ElevatorStates.DOORSCLOSED,
 						Elevator.ElevatorStates.DOORSCLOSED, Elevator.ElevatorStates.DOORSCLOSED));
 		this.elevatorQueue = new HashMap<>();
-		//this.destinationFloor = new HashMap<>();
 		this.elevatorRequests = new HashMap<>();
 		
 		this.elevatorQueue.put(ELEVATOR1, new ArrayList<Integer>());
 		this.elevatorQueue.put(ELEVATOR2, new ArrayList<Integer>());
 		this.elevatorQueue.put(ELEVATOR3, new ArrayList<Integer>());
 		this.elevatorQueue.put(ELEVATOR4, new ArrayList<Integer>());
-		
-		//this.destinationFloor.put(ELEVATOR1, new ArrayList<Integer>());
-		//this.destinationFloor.put(ELEVATOR2, new ArrayList<Integer>());
-		//this.destinationFloor.put(ELEVATOR3, new ArrayList<Integer>());
-		//this.destinationFloor.put(ELEVATOR4, new ArrayList<Integer>());
 		
 		this.elevatorRequests.put(ELEVATOR1, new ArrayList<Message>());
 		this.elevatorRequests.put(ELEVATOR2, new ArrayList<Message>());
@@ -151,37 +145,32 @@ public class Scheduler {
 			}
 		}
 
-		int elevatorThreadNum = Integer.parseInt(Thread.currentThread().getName());
+		int elevatorNum = Integer.parseInt(Thread.currentThread().getName());
+		this.states = SchedulerStates.SENDING; // SENDING INFORMATION
 
-
-		this.states = SchedulerStates.SENDING; // SENDING INFORMATIO
-
-		
-		if (elevatorQueue.get(elevatorThreadNum).size() == 0) { // IF THERE ARE NO NEW DESTINATIONS
+		if (elevatorQueue.get(elevatorNum).size() == 0) { // IF THERE ARE NO NEW DESTINATIONS
 			//ArrayList<Integer> temp = new ArrayList<>();
 			//temp.add(0, 0);
 			notifyAll();
-			
 			this.states = SchedulerStates.WAITING; // back to WAITING
-			
 			return 0;
 		}
 
 		// Get the next destination and give it to the elevator
-		//this.destinationFloor.get(elevatorThreadNum).add(0, elevatorQueue.get(elevatorThreadNum).get(ELEVATOR_QUEUE_FIRST_INDEX));
-	//	ArrayList<Integer> reply = this.destinationFloor.get(elevatorThreadNum);
+		// this.destinationFloor.get(elevatorNum).add(0, elevatorQueue.get(elevatorNum).get(ELEVATOR_QUEUE_FIRST_INDEX));
+		// ArrayList<Integer> reply = this.destinationFloor.get(elevatorNum);
 		
-		int reply = this.elevatorQueue.get(elevatorThreadNum).get(ELEVATOR_QUEUE_FIRST_INDEX);
+		int reply = this.elevatorQueue.get(elevatorNum).get(ELEVATOR_QUEUE_FIRST_INDEX);
 		
 		// if the elevator has arrived at its destination, remove the destination from the elevator's queue
-		if(elevatorFloors.get(elevatorThreadNum) == elevatorQueue.get(elevatorThreadNum).get(ELEVATOR_QUEUE_FIRST_INDEX)) { 
-			elevatorQueue.get(elevatorThreadNum).remove(ELEVATOR_QUEUE_FIRST_INDEX);
+		if(elevatorFloors.get(elevatorNum) == elevatorQueue.get(elevatorNum).get(ELEVATOR_QUEUE_FIRST_INDEX)) { 
+			elevatorQueue.get(elevatorNum).remove(ELEVATOR_QUEUE_FIRST_INDEX);
 			
 			ArrayList<Message> remove = new ArrayList<>();
-			for(Message m: this.elevatorRequests.get(elevatorThreadNum)) {
+			for(Message m: this.elevatorRequests.get(elevatorNum)) {
 				boolean startGone = true;
 				boolean finishGone = true;
-				for(int j : this.elevatorQueue.get(elevatorThreadNum)) {
+				for(int j : this.elevatorQueue.get(elevatorNum)) {
 					if(j == m.startFloor()) {
 						startGone = false;
 					}
@@ -190,30 +179,38 @@ public class Scheduler {
 					}
 				}
 				
-				if (elevatorFloors.get(elevatorThreadNum) == m.startFloor())
+				if (elevatorFloors.get(elevatorNum) == m.startFloor())
 				{
 					for (ElevatorView ev : this.views)
 					{
-						ev.updateLight(m.destinationFloor(), elevatorThreadNum, true);
-						ev.updateLight(m.startFloor(), elevatorThreadNum, false);
+						ev.updateLight(m.destinationFloor(), elevatorNum, true);
+						ev.updateLight(m.startFloor(), elevatorNum, false);
 					}
 				}
-				if (elevatorFloors.get(elevatorThreadNum) == m.destinationFloor())
+				if (elevatorFloors.get(elevatorNum) == m.destinationFloor())
 				{
 					for (ElevatorView ev : this.views)
 					{
-						ev.updateLight(m.destinationFloor(), elevatorThreadNum, false);
+						ev.updateLight(m.destinationFloor(), elevatorNum, false);
 					}
 				}
 
+				if(m.getErrorCode() != 0 && elevatorFloors.get(elevatorNum) == m.startFloor())  {
+					if(m.getErrorCode() == 1) {
+						reply += 100;
+					} else if(m.getErrorCode() == 2) {
+						reply += 200;
+					}
+				}
+				
 				String movement = "";
-				if(elevatorStates.get(elevatorThreadNum) == Elevator.ElevatorStates.MOVINGUP) {
+				if(elevatorStates.get(elevatorNum) == Elevator.ElevatorStates.MOVINGUP) {
 					movement = "UP";
 				}
-				else if(elevatorStates.get(elevatorThreadNum) == Elevator.ElevatorStates.MOVINGDOWN) {
+				else if(elevatorStates.get(elevatorNum) == Elevator.ElevatorStates.MOVINGDOWN) {
 					movement = "DOWN";
 				}
-				else if(elevatorStates.get(elevatorThreadNum) == Elevator.ElevatorStates.DOORSCLOSED){
+				else if(elevatorStates.get(elevatorNum) == Elevator.ElevatorStates.DOORSCLOSED){
 					movement = "CLOSED";
 				}
 				
@@ -222,8 +219,8 @@ public class Scheduler {
 					
 				}
 			}
-			System.out.println(elevatorThreadNum + ": " + this.elevatorRequests.get(elevatorThreadNum));
-			this.elevatorRequests.get(elevatorThreadNum).removeAll(remove);
+			System.out.println(elevatorNum + ": " + this.elevatorRequests.get(elevatorNum));
+			this.elevatorRequests.get(elevatorNum).removeAll(remove);
 		}
 
 		this.states = SchedulerStates.WAITING; // back to WAITING
@@ -252,7 +249,9 @@ public class Scheduler {
 				
 		for (ElevatorView ev : this.views)
 		{
-			ev.updateFloorAndState(currentFloor, elevatorNum, elevatorState);
+			if(currentFloor != 0) {
+				ev.updateFloorAndState(currentFloor, elevatorNum, elevatorState);				
+			}
 		}
 
 		while (states != SchedulerStates.WAITING) { // If the scheduler is not in the WAITING state, thread must wait
@@ -358,7 +357,6 @@ public class Scheduler {
 				this.elevatorQueue.get(closestElevator).add(destFloor);
 			}
 			
-
 			for (ElevatorView ev : this.views)
 			{
 				ev.updateLight(startFloor, closestElevator, true);
