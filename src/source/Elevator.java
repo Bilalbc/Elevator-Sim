@@ -1,15 +1,12 @@
 package source;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.util.ArrayList;
 
 /**
  * @author Akshay V., Kousha Motazedian, Matthew Parker
@@ -51,7 +48,7 @@ public class Elevator implements Runnable {
 	public Elevator(int portNum, int assignedNum) {
 		try {
 			this.sendAndReceive = new DatagramSocket();
-//			sendAndReceive.setSoTimeout(10000);
+			sendAndReceive.setSoTimeout(10000);
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
@@ -103,17 +100,14 @@ public class Elevator implements Runnable {
 				sendAndReceive.receive(receiving);
  
 				if (receivingData[0] != 0) {
+					// read as unsigned since byte values over 100 may convert to negative integer value
 					int data = Byte.toUnsignedInt(receivingData[0]);
-					if(data >= 200) {
+					if(data >= 200) { // TIMEOUT error 
 						errorCode = 2;
-						System.out.println("Elevator " + assignedNum + " recieved error Code 2");
-					} else if (data >= 100) {
+					} else if (data >= 100) { // DoorsStruck error
 						errorCode = 1;
-						System.out.println("Elevator " + assignedNum + " recieved error Code 1");
 					}
-					this.destination = data % 100;
-					System.out.print("Elevator " + assignedNum + " ");
-					System.out.println(data);
+					this.destination = data % 100; // 10s and 1s digit contain destination floor
 				}
 			}
 
@@ -149,6 +143,13 @@ public class Elevator implements Runnable {
 				if (currentState == ElevatorStates.TIMEOUT) {
 					sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), true);
 					Thread.sleep(100000);
+					/**
+					 *	removed the interrupt here, but may need to put it back or find another way to properly exit the while loop (break maybe)
+					 * 
+					 * 
+					 * 
+					 * 
+					 */
 				}
 
 				Thread.sleep(100);
@@ -186,7 +187,8 @@ public class Elevator implements Runnable {
 					}
 				} else if(errorCode == 1) {
 					currentState = ElevatorStates.STUCKCLOSED;
-				} else if(errorCode == 2) {
+				} else if(errorCode == 2) { 
+					// delay so the TimeoutTimer can interrupt the elevator thread
 					Thread.sleep(TIME_TO_MOVE + 1000);
 				}
 				tThread.interrupt();
@@ -247,8 +249,10 @@ public class Elevator implements Runnable {
 		return currentState;
 	}
 
+	/**
+	 * Setter method used by Timeout Thread to set elevator state if moving floors takes longer than expected
+	 */
 	public void setTimeout() {
-		System.out.println("TIMING OUT " + assignedNum);
 		this.currentState = ElevatorStates.TIMEOUT;
 	}
 	

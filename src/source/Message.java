@@ -87,12 +87,14 @@ public class Message implements Serializable {
 		return this.destinationFloor;
 	}
 	
+
+	/**
+	 * Getter for the error code of the request
+	 * 
+	 * @return ErrorCode, int
+	 */
 	public int getErrorCode() {
 		return errorCode;
-	}
-
-	public void setErrorCode(int errorCode) {
-		this.errorCode = errorCode;
 	}
 
 	/**

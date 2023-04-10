@@ -15,10 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Iterator;
-import java.util.Set;
 
 import source.Elevator.ElevatorStates;
 
@@ -195,10 +192,12 @@ public class Scheduler {
 					}
 				}
 
+				// error codes to be sent to elevator
 				if(m.getErrorCode() != 0 && elevatorFloors.get(elevatorNum) == m.startFloor())  {
-					if(m.getErrorCode() == 1) {
-						reply += 100;
-					} else if(m.getErrorCode() == 2) {
+					// 100s digit specifies the type of error, destination floor populates 10s and 1s digits
+					if(m.getErrorCode() == 1) { // doors stuck error 
+						reply += 100; 
+					} else if(m.getErrorCode() == 2) { // TIMEOUT error
 						reply += 200;
 					}
 				}

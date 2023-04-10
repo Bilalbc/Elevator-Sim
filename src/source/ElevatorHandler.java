@@ -10,11 +10,9 @@
 package source;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
@@ -42,7 +40,7 @@ public class ElevatorHandler implements Runnable {
 
 		try {
 			socket = new DatagramSocket(elevatorPort);
-//			socket.setSoTimeout(TIMEOUT);
+			socket.setSoTimeout(TIMEOUT);
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);

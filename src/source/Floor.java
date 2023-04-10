@@ -16,7 +16,6 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -34,7 +33,10 @@ public class Floor implements Runnable {
 	private File floorRequests;
 	private long messageDelay = 0;
 	private DatagramSocket sendAndReceive;
+	
+	// shared data. not synchronized since minimum delay between requests will ensure it is not accessed twice in the same momoent 
 	private ArrayList<Message> requestQueue;
+	
 	private boolean requestsComplete;
 
 	private Scanner reader;
@@ -50,7 +52,7 @@ public class Floor implements Runnable {
 		this.requestsComplete = false;
 		try {
 			this.sendAndReceive = new DatagramSocket();
-//			sendAndReceive.setSoTimeout(10000);
+			sendAndReceive.setSoTimeout(10000);
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
@@ -58,6 +60,12 @@ public class Floor implements Runnable {
 		updateTimes();
 	}
 
+	/**
+	 * Helper method to randomly recalculate the time values for incoming requests.
+	 * On average the requests will extend over a 3 minute period.
+	 * 
+	 * Used to ensure the request times will be set based on time the program is run
+	 */
 	private void updateTimes() {
 		ArrayList<String[]> rows = new ArrayList<>();
 		try {
@@ -79,19 +87,21 @@ public class Floor implements Runnable {
 			}
 
 			reader.close();
-			// Write out the modified CSV file
+			
+			// Write out adjusted requests to temporary file
 			File tempFile = new File("src//source//temp.csv");
 			FileWriter writer = new FileWriter(tempFile);
 			for (int i = 0; i < rows.size(); i++) {
-			    String[] row = rows.get(i);
-			    line = String.join(",", row);
-			    writer.write(line);
-			    if (i < rows.size() - 1) {
-			        writer.write("\n");
-			    }
+				String[] row = rows.get(i);
+				line = String.join(",", row);
+				writer.write(line);
+				if (i < rows.size() - 1) {
+					writer.write("\n");
+				}
 			}
 			writer.close();
 
+			// mv temporary file to requestsFile, overwriting it.
 			java.nio.file.Files.move(java.nio.file.Paths.get(tempFile.getAbsolutePath()),
 					java.nio.file.Paths.get(floorRequests.getAbsolutePath()),
 					java.nio.file.StandardCopyOption.REPLACE_EXISTING);
@@ -122,6 +132,12 @@ public class Floor implements Runnable {
 
 	}
 
+	/**
+	 * Method to read the time of request from the file, and set the message delay
+	 * value such that the request will execute at the desired time
+	 * 
+	 * @param timeString : String value read from first column of the file.
+	 */
 	private void setDelay(String timeString) {
 		SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
 		Date date = null;
@@ -134,13 +150,18 @@ public class Floor implements Runnable {
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(date);
 
+		// Change the date from Jan 1st 1970 to today, to accurately retrieve Millis for
+		// current time
 		Calendar today = Calendar.getInstance();
 		calendar.set(Calendar.YEAR, today.get(Calendar.YEAR));
 		calendar.set(Calendar.MONTH, today.get(Calendar.MONTH));
 		calendar.set(Calendar.DAY_OF_MONTH, today.get(Calendar.DAY_OF_MONTH));
 
+		// determine the difference in Millis from current time to calculated time of
+		// request
 		long differenceMillis = calendar.getTimeInMillis() - System.currentTimeMillis();
 
+		// set messageDelay to difference (time till request comes in)
 		messageDelay = (differenceMillis > 0 ? differenceMillis : 0);
 	}
 
@@ -188,7 +209,7 @@ public class Floor implements Runnable {
 				byte sendingData[] = byteStream.toByteArray();
 				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(),
 						FloorHandler.FLOOR_HANDLER_PORT); // Send to floor handler
-				
+
 				sendAndReceive.send(sending);
 
 				byte receivingData[] = new byte[1];
@@ -232,6 +253,7 @@ public class Floor implements Runnable {
 	 * and then the reply from the elevator is printed
 	 */
 	public void run() {
+		// create thread to read requests, and store in shared data at appropriate time
 		Thread requestHandlerThread = new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -240,11 +262,12 @@ public class Floor implements Runnable {
 					while (true) {
 						if (reader.hasNextLine()) {
 							Message req = createRequest(reader);
-							Thread.sleep(messageDelay);
-							messageDelay = 0;
-							requestQueue.add(req);
+							// sleep until the specified time is reached
+							Thread.sleep(messageDelay); 
+							messageDelay = 0; // reset delay 
+							requestQueue.add(req); // add to shared data 
 						} else {
-							requestsComplete = true;
+							requestsComplete = true; // no more requests
 						}
 					}
 				} catch (FileNotFoundException | InterruptedException e) {
@@ -254,13 +277,15 @@ public class Floor implements Runnable {
 		});
 
 		requestHandlerThread.start();
+		// send and receive thread 
 		while (true) {
+			// if there are no requests, send empty message to handler
 			if (requestQueue.isEmpty()) {
 				sendAndGetMessage(null, true);
 				System.out.println(messageDelay);
 			} else {
 				Calendar calendar = Calendar.getInstance();
-
+				// pop request
 				Message req = requestQueue.remove(0);
 				System.out.println("Passing message: " + req + " at " + calendar.getTime());
 				sendAndGetMessage(req, true);

@@ -43,6 +43,7 @@ public class TimeoutTimer implements Runnable {
 			}
 			
 			elevator.setTimeout();
+			// when elevator times out, associated timer thread should exit
 			break;
 		}
 	}
