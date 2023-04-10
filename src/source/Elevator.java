@@ -103,16 +103,17 @@ public class Elevator implements Runnable {
 				sendAndReceive.receive(receiving);
  
 				if (receivingData[0] != 0) {
-					if(receivingData[0] >= 200) {
+					int data = Byte.toUnsignedInt(receivingData[0]);
+					if(data >= 200) {
 						errorCode = 2;
 						System.out.println("Elevator " + assignedNum + " recieved error Code 2");
-					} else if (receivingData[0] >= 100) {
+					} else if (data >= 100) {
 						errorCode = 1;
 						System.out.println("Elevator " + assignedNum + " recieved error Code 1");
 					}
-					this.destination = receivingData[0] % 100;
+					this.destination = data % 100;
 					System.out.print("Elevator " + assignedNum + " ");
-					System.out.println(receivingData[0]);
+					System.out.println(data);
 				}
 			}
 
@@ -146,13 +147,11 @@ public class Elevator implements Runnable {
 
 				// If timeout occurs, break out and end the thread.
 				if (currentState == ElevatorStates.TIMEOUT) {
-					Thread.currentThread().interrupt();
-					Thread.sleep(200);
-					
 					sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), true);
 					Thread.sleep(100000);
 				}
 
+				Thread.sleep(100);
 				if (destination == currentFloor && currentState != ElevatorStates.DOORSCLOSED) {
 					currentState = ElevatorStates.STOPPED;
 					Thread.sleep(TIME_DOORS);
@@ -188,7 +187,7 @@ public class Elevator implements Runnable {
 				} else if(errorCode == 1) {
 					currentState = ElevatorStates.STUCKCLOSED;
 				} else if(errorCode == 2) {
-					Thread.sleep(500);
+					Thread.sleep(TIME_TO_MOVE + 1000);
 				}
 				tThread.interrupt();
 				System.out.println(

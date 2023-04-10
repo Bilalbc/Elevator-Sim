@@ -266,7 +266,7 @@ public class Scheduler {
 		if (elevatorState == Elevator.ElevatorStates.TIMEOUT)
 		{
 			System.out.println("Elevator " + elevatorNum + " has timed out before reaching next floor...elevator shutting down");
-			this.elevatorQueue.get(elevatorNum).clear();
+			this.elevatorQueue.get(elevatorNum-1).clear();
 		}
 		
 		// Update current floor and current state of called elevator

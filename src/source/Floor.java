@@ -189,11 +189,6 @@ public class Floor implements Runnable {
 				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(),
 						FloorHandler.FLOOR_HANDLER_PORT); // Send to floor handler
 				
-				System.out.print("SENDING: ");
-				System.out.println(sendingMessage + " ");
-				for(byte i : sendingData) {
-					System.out.print(i);
-				}
 				sendAndReceive.send(sending);
 
 				byte receivingData[] = new byte[1];
