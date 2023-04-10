@@ -78,7 +78,9 @@ public class FloorHandler implements Runnable {
 		} catch (ClassNotFoundException | IOException e) {
 			e.printStackTrace();
 		}
-		if ((((Message) o).getReturnMessage() != null) && ((Message) o).getReturnMessage().equals("done")) {
+		if (o == null) {
+			return;
+		} else if((((Message) o).getReturnMessage() != null) && ((Message) o).getReturnMessage().equals("done")) {
 			scheduler.setRequestsComplete(true);
 		} else {
 			scheduler.passMessage((Message) o);

@@ -20,6 +20,7 @@ public class Message implements Serializable {
 	private int startFloor;
 	private int destinationFloor;
 	private String returnMessage;
+	private int errorCode;
 
 	/**
 	 * Message Constructor
@@ -29,11 +30,13 @@ public class Message implements Serializable {
 	 * @param direction,        String: UP or DOWN
 	 * @param destinationFloor, int: The destination floor of the request
 	 */
-	public Message(String time, int startFloor, String direction, int destinationFloor) {
+	public Message(String time, int startFloor, String direction, int destinationFloor, int errorCode) {
 		this.time = time;
 		this.direction = direction;
 		this.startFloor = startFloor;
 		this.destinationFloor = destinationFloor;
+		this.errorCode = errorCode;
+		this.returnMessage = "";
 	}
 
 	/**
@@ -83,6 +86,16 @@ public class Message implements Serializable {
 	public int destinationFloor() {
 		return this.destinationFloor;
 	}
+	
+
+	/**
+	 * Getter for the error code of the request
+	 * 
+	 * @return ErrorCode, int
+	 */
+	public int getErrorCode() {
+		return errorCode;
+	}
 
 	/**
 	 * Sets the return message (reply) from the elevator.
@@ -127,5 +140,4 @@ public class Message implements Serializable {
 				&& (this.direction.equals(dupe.direction)) && (this.time.equals(dupe.time)))
 				|| (this.returnMessage.equals(dupe.returnMessage)));
 	}
-
 }
