@@ -28,9 +28,7 @@ public class Elevator implements Runnable {
 	private int errorCode;
 	private DatagramSocket sendAndReceive;
 
-	private boolean[] lightsGrid;
-
-	private static final int NUM_FLOORS = 10;
+	private static final int NUM_FLOORS = 22;
 	private static final int TIME_TO_MOVE = 4083;
 	private static final int TIME_DOORS = 1000;
 	private static final int MAX_DATA_SIZE = 250;	
@@ -60,7 +58,6 @@ public class Elevator implements Runnable {
 		this.assignedNum = assignedNum;
 		this.currentState = ElevatorStates.DOORSCLOSED; // Elevator starts at a closed state
 		this.handlerPort = portNum;
-		this.lightsGrid = new boolean[NUM_FLOORS];
 		this.errorCode = 0;
 	}
 
@@ -166,7 +163,6 @@ public class Elevator implements Runnable {
 					System.out.println(
 							"Elevator " + assignedNum + ": Letting People in and out on floor " + currentFloor + "!");
 					
-					lightsGrid[currentFloor-1] = false;
 					Thread.sleep(TIME_DOORS);
 					this.currentState = ElevatorStates.DOORSCLOSED; // Set to doors closed
 				}
