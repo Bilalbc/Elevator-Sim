@@ -562,9 +562,9 @@ public class Iteration5Test {
 		floorThread.start();
 		floorHandlerThread.start();
 
-		ArrayList<Integer> expectedEV1 = new ArrayList<>(Arrays.asList(5));
+		ArrayList<Integer> expectedEV1 = new ArrayList<>(Arrays.asList(3));
 		ArrayList<Integer> expectedEV2 = new ArrayList<>(Arrays.asList(3, 7));
-		ArrayList<Integer> expectedOppositeDirection = new ArrayList<>(Arrays.asList(4, 2));
+		ArrayList<Integer> expectedOppositeDirection = new ArrayList<>(Arrays.asList(2, 1));
 		
 		boolean ev1Pass = false;
 		boolean ev2Pass = false;
