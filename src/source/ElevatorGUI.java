@@ -11,6 +11,7 @@ package source;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
+import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -223,6 +224,13 @@ public class ElevatorGUI extends JFrame implements ElevatorView {
     	}
     	    	
 		this.floorCoordinates[floor].setBackground(Color.yellow);
+	}
+	
+	/**
+	 * Helper Method for testing to programmatically close the GUI
+	 */
+	public void close() {
+		this.dispose();
 	}
 
 }

@@ -48,7 +48,7 @@ public class Elevator implements Runnable {
 	public Elevator(int portNum, int assignedNum) {
 		try {
 			this.sendAndReceive = new DatagramSocket();
-			sendAndReceive.setSoTimeout(10000);
+			sendAndReceive.setSoTimeout(15000);
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
@@ -186,14 +186,14 @@ public class Elevator implements Runnable {
 						currentFloor--;
 					}
 				} else if(errorCode == 1) {
-					currentState = ElevatorStates.STUCKCLOSED;
+					currentState = ElevatorStates.STUCKOPEN;
 				} else if(errorCode == 2) { 
 					// delay so the TimeoutTimer can interrupt the elevator thread
 					Thread.sleep(TIME_TO_MOVE + 1000);
 				}
 				tThread.interrupt();
-				System.out.println(
-						"Elevator " + assignedNum + " is on floor " + currentFloor + ". Destination is " + destination);
+				//System.out.println(
+				//		"Elevator " + assignedNum + " is on floor " + currentFloor + ". Destination is " + destination);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -260,6 +260,14 @@ public class Elevator implements Runnable {
 	public void setState(Elevator.ElevatorStates state) {
 		this.currentState = state;
 	}
+	
+	/**
+	 * Getter method used to retrieve destination floor for testing
+	 * @return destinationFloor : int
+	 */
+	public int getDestinationFloor() {
+		return this.destination;
+	}
 
 	public static void main(String[] args) {
 
@@ -272,6 +280,13 @@ public class Elevator implements Runnable {
 		e2.start();
 		e3.start();
 		e4.start();
+	}
+	
+	/**
+	 * Method used to close sockets for testing purposes
+	 */
+	public void closeSockets() {
+		sendAndReceive.close();
 	}
 
 }

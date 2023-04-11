@@ -36,11 +36,21 @@ public class Floor implements Runnable {
 	
 	// shared data. not synchronized since minimum delay between requests will ensure it is not accessed twice in the same momoent 
 	private ArrayList<Message> requestQueue;
-	
 	private boolean requestsComplete;
+	private Message latestReturned; // for testing
 
-	private Scanner reader;
-
+	private Scanner scanner;
+	private int requestsHandled; // Value for tracking requests read for testing
+	private boolean scannerActive;
+	
+	
+	/**
+	 * Utility constructor to allow access of methods in testing
+	 */
+	public Floor() {
+		// Do nothing 
+	}
+	
 	/**
 	 * Constructor for Floor class
 	 * 
@@ -50,9 +60,10 @@ public class Floor implements Runnable {
 		this.floorRequests = file;
 		this.requestQueue = new ArrayList<Message>();
 		this.requestsComplete = false;
+		this.requestsHandled = 0;
 		try {
 			this.sendAndReceive = new DatagramSocket();
-			sendAndReceive.setSoTimeout(10000);
+			sendAndReceive.setSoTimeout(15000);
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
@@ -80,7 +91,8 @@ public class Floor implements Runnable {
 			Calendar cal = Calendar.getInstance();
 			cal.setTimeInMillis(System.currentTimeMillis());
 			for (String[] row : rows) {
-				int rand = (int) (Math.random() * 10) + 3;
+				//int rand = (int) (Math.random() * 10) + 4;
+				int rand = 1;
 				cal.add(Calendar.SECOND, rand);
 				row[0] = cal.get(Calendar.HOUR_OF_DAY) + ":" + cal.get(Calendar.MINUTE) + ":"
 						+ cal.get(Calendar.SECOND);
@@ -118,7 +130,7 @@ public class Floor implements Runnable {
 	 * @return req, Request information, from file null if data was in incorrect
 	 *         format
 	 */
-	private Message createRequest(Scanner reader) {
+	public Message createRequest(Scanner reader) {
 		String data = reader.nextLine();
 		String[] values = data.split(", ");
 		Message req = null;
@@ -234,14 +246,14 @@ public class Floor implements Runnable {
 				ObjectInputStream objectStream = new ObjectInputStream(byteStream);
 
 				sendingMessage = (Message) objectStream.readObject();
-				System.out.println(sendingMessage.getReturnMessage());
+				latestReturned = sendingMessage;
+				Thread.sleep(100);
 
 				byteStream.close();
 				objectStream.close();
 			}
 
-		} catch (IOException | ClassNotFoundException e) {
-			reader.close();
+		} catch (IOException | ClassNotFoundException | InterruptedException e) {
 			System.exit(1);
 		}
 	}
@@ -258,16 +270,23 @@ public class Floor implements Runnable {
 			@Override
 			public void run() {
 				try {
-					reader = new Scanner(floorRequests);
-					while (true) {
-						if (reader.hasNextLine()) {
-							Message req = createRequest(reader);
-							// sleep until the specified time is reached
-							Thread.sleep(messageDelay); 
-							messageDelay = 0; // reset delay 
-							requestQueue.add(req); // add to shared data 
+					scanner = new Scanner(floorRequests);
+					scannerActive = true;
+					while (scannerActive) {
+						if (scanner.hasNextLine()) {
+							requestsHandled ++;
+							Message req = createRequest(scanner);
+							if(req != null) {
+								// sleep until the specified time is reached
+								Thread.sleep(messageDelay); 
+								messageDelay = 0; // reset delay 
+								requestQueue.add(req); // add to shared data 		
+							}
 						} else {
 							requestsComplete = true; // no more requests
+							scanner.close();
+							scannerActive = false;
+							break;
 						}
 					}
 				} catch (FileNotFoundException | InterruptedException e) {
@@ -282,7 +301,10 @@ public class Floor implements Runnable {
 			// if there are no requests, send empty message to handler
 			if (requestQueue.isEmpty()) {
 				sendAndGetMessage(null, true);
-				System.out.println(messageDelay);
+			} else if (requestsComplete && requestQueue.isEmpty() ) {
+				// notify scheduler that there are no more requests to be sent
+				Message done = new Message("done");
+				sendAndGetMessage(done, true);
 			} else {
 				Calendar calendar = Calendar.getInstance();
 				// pop request
@@ -290,14 +312,33 @@ public class Floor implements Runnable {
 				System.out.println("Passing message: " + req + " at " + calendar.getTime());
 				sendAndGetMessage(req, true);
 			}
-			if (requestsComplete) {
-				// notify scheduler that there are no more requests to be sent
-				Message done = new Message("done");
-				sendAndGetMessage(done, true);
-			}
+			
 			Message returned = new Message("");
 			sendAndGetMessage(returned, false);
 		}
+	}
+	
+	/**
+	 * Method used to close sockets for testing purposes
+	 */
+	public void closeSockets() {
+		sendAndReceive.close();
+	}
+	
+	/**
+	 * Method used to manually close the socket, for testing 
+	 */
+	public void closeScanner() {
+		scanner.close();
+		scannerActive = false;
+	}
+	
+	public Message getLatestReturned() {
+		return latestReturned;
+	}
+	
+	public int getRequestsHandled() {
+		return requestsHandled;
 	}
 
 	public static void main(String[] args) {

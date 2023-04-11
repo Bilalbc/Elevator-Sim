@@ -49,36 +49,37 @@ public class Scheduler {
 
 	private HashMap<Integer, ArrayList<Integer>> elevatorQueue;
 	private HashMap<Integer, ArrayList<Message>> elevatorRequests;
+
+	ElevatorGUI eg;
 	
 	/**
 	 * Constructor for class Scheduler. Initializes messageQueue, replyQueue,
 	 * elevatorFloors, elevatorStates and the elevatorQueue for all elevators.
 	 */
 	public Scheduler() {
+		this(4);
+	}
+	
+	public Scheduler(int numElevators) {
 		this.messageQueue = new ArrayList<>();
 		this.replyQueue = new ArrayList<>();
-		this.elevatorFloors = new ArrayList<>(Arrays.asList(0, 0, 0, 0));
-		this.elevatorStates = new ArrayList<>(
-				Arrays.asList(Elevator.ElevatorStates.DOORSCLOSED, Elevator.ElevatorStates.DOORSCLOSED,
-						Elevator.ElevatorStates.DOORSCLOSED, Elevator.ElevatorStates.DOORSCLOSED));
 		this.elevatorQueue = new HashMap<>();
 		this.elevatorRequests = new HashMap<>();
+		this.elevatorStates = new ArrayList<>();
+		this.elevatorFloors = new ArrayList<>();
 		
-		this.elevatorQueue.put(ELEVATOR1, new ArrayList<Integer>());
-		this.elevatorQueue.put(ELEVATOR2, new ArrayList<Integer>());
-		this.elevatorQueue.put(ELEVATOR3, new ArrayList<Integer>());
-		this.elevatorQueue.put(ELEVATOR4, new ArrayList<Integer>());
-		
-		this.elevatorRequests.put(ELEVATOR1, new ArrayList<Message>());
-		this.elevatorRequests.put(ELEVATOR2, new ArrayList<Message>());
-		this.elevatorRequests.put(ELEVATOR3, new ArrayList<Message>());
-		this.elevatorRequests.put(ELEVATOR4, new ArrayList<Message>());
+		for(int i = 0; i < numElevators; i++) {
+			this.elevatorRequests.put(i, new ArrayList<Message>());
+			this.elevatorQueue.put(i, new ArrayList<Integer>());
+			this.elevatorStates.add(Elevator.ElevatorStates.DOORSCLOSED);
+			this.elevatorFloors.add(0);
+		}
 
 		this.states = SchedulerStates.WAITING;
 		
 		this.views = new ArrayList<>();
 		
-		ElevatorGUI eg = new ElevatorGUI(this);
+		eg = new ElevatorGUI(this);
 	}
 	
 	/**
@@ -218,13 +219,11 @@ public class Scheduler {
 					
 				}
 			}
-			System.out.println(elevatorNum + ": " + this.elevatorRequests.get(elevatorNum));
 			this.elevatorRequests.get(elevatorNum).removeAll(remove);
 		}
 
 		this.states = SchedulerStates.WAITING; // back to WAITING
 		notifyAll();
-		System.out.println(reply);
 		return reply;
 	}
 
@@ -473,6 +472,7 @@ public class Scheduler {
 	 */
 	public void setClosed() {
 		this.closed = true;
+		eg.close();
 	}
 
 	/**
@@ -508,7 +508,7 @@ public class Scheduler {
 	 * 
 	 * @return SchedulerStates : current state of the Scheduler
 	 */
-	public SchedulerStates getSchedulerState() {
+	public SchedulerStates getCurrentState() {
 		return this.states;
 	}
 
@@ -537,6 +537,14 @@ public class Scheduler {
 	 */
 	public HashMap<Integer, ArrayList<Integer>> getElevatorQueue() {
 		return this.elevatorQueue;
+	}
+	
+	/**
+	 * Getter Method for Elevator Requests Map 
+	 * @return elevatorRrequests : HashMap<Integer, ArrayList<Message>>
+	 */
+	public HashMap<Integer, ArrayList<Message>> getElevatorRequests() {
+		return elevatorRequests;
 	}
 
 	public static void main(String[] args) {

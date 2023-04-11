@@ -153,10 +153,15 @@ public class FloorHandler implements Runnable {
 
 			socket.send(sendPacket);
 		} catch (IOException e) {
-			System.out.print("IO Exception: likely:");
-			System.out.println("Receive Socket Timed Out.\n" + e);
 			e.printStackTrace();
 			System.exit(1);
 		}
+	}
+	
+	/**
+	 * Method used to close sockets for testing purposes
+	 */
+	public void closeSockets() {
+		socket.close();
 	}
 }

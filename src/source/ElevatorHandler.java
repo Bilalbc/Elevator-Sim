@@ -16,6 +16,7 @@ import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 
 public class ElevatorHandler implements Runnable {
 
@@ -123,10 +124,15 @@ public class ElevatorHandler implements Runnable {
 					receivePacket.getPort());
 			socket.send(sendPacket);
 		} catch (IOException e) {
-			System.out.print("IO Exception: likely:");
-			System.out.println("Receive Socket Timed Out.\n" + e);
 			e.printStackTrace();
 			System.exit(1);
 		}
+	}
+	
+	/**
+	 * Method used to close sockets for testing purposes
+	 */
+	public void closeSockets() {
+		socket.close();
 	}
 }
