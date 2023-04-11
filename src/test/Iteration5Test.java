@@ -23,6 +23,7 @@ import source.Scheduler.SchedulerStates;
 public class Iteration5Test {
 
 	private File badTestFile = new File("src//test//BadTestData.csv");
+	private File badTestResortFile = new File("src//test//BadTestDataResort.csv");
 	private File goodTestFile = new File("src//test//GoodTestData.csv");
 	private File algorithmTestFile = new File("src//test//AlgorithmTest.csv");
 
@@ -330,7 +331,6 @@ public class Iteration5Test {
 			}
 
 			if (waiting && receiving && sending) {
-				floor.closeScanner();
 				return; // will pass test if reaches return
 			}
 		}
@@ -565,19 +565,19 @@ public class Iteration5Test {
 		ArrayList<Integer> expectedEV1 = new ArrayList<>(Arrays.asList(3));
 		ArrayList<Integer> expectedEV2 = new ArrayList<>(Arrays.asList(3, 7));
 		ArrayList<Integer> expectedOppositeDirection = new ArrayList<>(Arrays.asList(2, 1));
-		
+
 		boolean ev1Pass = false;
 		boolean ev2Pass = false;
 		boolean oppositeDirectionPass = false;
-		
-		while(e1.isAlive()) {
+
+		while (e1.isAlive()) {
 			try {
 				System.out.println(sch.getElevatorQueue());
 				Thread.sleep(100);
 				if (floor.getRequestsHandled() == 3) {
 					floor.closeScanner();
-				}	
-				
+				}
+
 				if (sch.getElevatorQueue().get(0).equals(expectedEV1) && !ev1Pass) {
 					ev1Pass = true;
 				}
@@ -591,12 +591,41 @@ public class Iteration5Test {
 					floor.closeScanner();
 					return;
 				}
-				
+
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
 
+	}
+
+	@Test
+	public void testAlgorithmRedistributeOnFailure() {
+		Scheduler sch = new Scheduler(1);
+
+		Elevator ev1 = new Elevator(elevatorPort, 1, Scheduler.TIMEOUT_DIASBLED);
+		Thread e1 = new Thread(ev1, "0");
+		Thread eh1 = new Thread(new ElevatorHandler(sch, elevatorPort, Scheduler.TIMEOUT_DIASBLED), "0");
+
+		Floor floor = new Floor(badTestResortFile, floorHandlerPort, Scheduler.TIMEOUT_DIASBLED);
+		Thread floorThread = new Thread(floor, "Floor");
+		Thread floorHandlerThread = new Thread(new FloorHandler(sch, floorHandlerPort, Scheduler.TIMEOUT_DIASBLED));
+
+		eh1.start();
+		e1.start();
+
+		floorThread.start();
+		floorHandlerThread.start();
+
+		Message expectedMessage1 = new Message("17:38:44", 4, "UP", 6, 1);
+		Message expectedMessage2 = new Message("17:38:45", 5, "UP", 7, 0);
+
+		while (e1.isAlive()) {
+			if (floor.getRequestsHandled() == 3 && sch.getMessages().contains(expectedMessage1)
+					&& sch.getMessages().contains(expectedMessage2) && sch.getElevatorQueue().get(0).size() == 0) {
+				return;
+			}
+		}
 	}
 
 }

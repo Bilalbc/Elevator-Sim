@@ -268,6 +268,18 @@ public class Scheduler {
 		if (elevatorState == Elevator.ElevatorStates.TIMEOUT)
 		{
 			System.out.println("Elevator " + elevatorNum + " has timed out before reaching next floor...elevator shutting down");
+			
+			//Takes outstanding requests and puts them in the message queue
+			ArrayList<Message> toRemove = new ArrayList<>();
+			
+			for (Message m : this.elevatorRequests.get(elevatorNum - 1)) {
+				if (this.elevatorQueue.get(elevatorNum - 1).contains(m.startFloor())) {
+					this.messageQueue.add(m);
+					toRemove.add(m);
+				}
+			}
+			elevatorRequests.get(elevatorNum - 1).removeAll(toRemove);
+			
 			this.elevatorQueue.get(elevatorNum-1).clear();
 		}
 		
@@ -546,7 +558,7 @@ public class Scheduler {
 	 * Getter Method for Elevator Requests Map 
 	 * @return elevatorRrequests : HashMap<Integer, ArrayList<Message>>
 	 */
-	public HashMap<Integer, ArrayList<Message>> getElevatorRequests() {
+	public synchronized HashMap<Integer, ArrayList<Message>> getElevatorRequests() {
 		return elevatorRequests;
 	}
 
