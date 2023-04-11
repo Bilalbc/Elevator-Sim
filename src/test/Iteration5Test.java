@@ -25,11 +25,17 @@ public class Iteration5Test {
 	private File badTestFile = new File("src//test//BadTestData.csv");
 	private File goodTestFile = new File("src//test//GoodTestData.csv");
 	private File algorithmTestFile = new File("src//test//AlgorithmTest.csv");
+
+	private File algorithmOppositeTestFile = new File("src//test//AlgorithmOppositeTestData.csv");
 	private static int elevatorPort = 51000;
 	private static int floorHandlerPort = 50000;
-	
+
 	@BeforeEach
 	public void initialize() {
+		incrementPorts();
+	}
+
+	private void incrementPorts() {
 		elevatorPort++;
 		floorHandlerPort++;
 	}
@@ -48,7 +54,7 @@ public class Iteration5Test {
 
 		Elevator ev = new Elevator(elevatorPort, 1, Scheduler.TIMEOUT_DIASBLED);
 		Thread e1 = new Thread(ev, "0");
-		
+
 		ElevatorHandler elevatorHandler = new ElevatorHandler(sch, elevatorPort, Scheduler.TIMEOUT_DIASBLED);
 		Thread eh1 = new Thread(elevatorHandler, "0");
 
@@ -56,7 +62,7 @@ public class Iteration5Test {
 		Thread floorThread = new Thread(floor, "Floor");
 		FloorHandler floorHandler = new FloorHandler(sch, floorHandlerPort, Scheduler.TIMEOUT_DIASBLED);
 		Thread floorHandlerThread = new Thread(floorHandler);
-		
+
 		e1.start();
 		eh1.start();
 		floorThread.start();
@@ -91,9 +97,9 @@ public class Iteration5Test {
 			assertTrue(arrivedAtDestination);
 			assertTrue(fixedDoors);
 			assertTrue(elevatorStuck);
-			
+
 			floor.closeScanner();
-			
+
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -120,7 +126,7 @@ public class Iteration5Test {
 			Floor floor = new Floor(badTestFile, floorHandlerPort, Scheduler.TIMEOUT_DIASBLED);
 			Thread floorThread = new Thread(floor, "Floor");
 			Thread floorHandlerThread = new Thread(new FloorHandler(sch, floorHandlerPort, Scheduler.TIMEOUT_DIASBLED));
-			
+
 			e1.start();
 			eh1.start();
 			floorThread.start();
@@ -132,7 +138,7 @@ public class Iteration5Test {
 			Message m = utilFloor.createRequest(reader);
 			Thread.sleep(2000);
 			assertTrue(m.equals(sch.getElevatorRequests().get(0).get(0)));
-			
+
 			floor.closeScanner();
 		} catch (FileNotFoundException | InterruptedException e) {
 			e.printStackTrace();
@@ -161,7 +167,7 @@ public class Iteration5Test {
 		Floor floor = new Floor(goodTestFile, floorHandlerPort, Scheduler.TIMEOUT_DIASBLED);
 		Thread floorThread = new Thread(floor, "Floor");
 		Thread floorHandlerThread = new Thread(new FloorHandler(sch, floorHandlerPort, Scheduler.TIMEOUT_DIASBLED));
-		
+
 		e1.start();
 		eh1.start();
 		floorThread.start();
@@ -202,7 +208,7 @@ public class Iteration5Test {
 		Floor floor = new Floor(badTestFile, floorHandlerPort, Scheduler.TIMEOUT_DIASBLED);
 		Thread floorThread = new Thread(floor, "Floor");
 		Thread floorHandlerThread = new Thread(new FloorHandler(sch, floorHandlerPort, Scheduler.TIMEOUT_DIASBLED));
-		
+
 		e1.start();
 		eh1.start();
 		floorThread.start();
@@ -216,7 +222,7 @@ public class Iteration5Test {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		
+
 		floor.closeScanner();
 	}
 
@@ -244,7 +250,7 @@ public class Iteration5Test {
 		Floor floor = new Floor(goodTestFile, floorHandlerPort, Scheduler.TIMEOUT_DIASBLED);
 		Thread floorThread = new Thread(floor, "Floor");
 		Thread floorHandlerThread = new Thread(new FloorHandler(sch, floorHandlerPort, Scheduler.TIMEOUT_DIASBLED));
-		
+
 		e1.start();
 		eh1.start();
 		floorThread.start();
@@ -301,7 +307,7 @@ public class Iteration5Test {
 		Floor floor = new Floor(goodTestFile, floorHandlerPort, Scheduler.TIMEOUT_DIASBLED);
 		Thread floorThread = new Thread(floor, "Floor");
 		Thread floorHandlerThread = new Thread(new FloorHandler(sch, floorHandlerPort, Scheduler.TIMEOUT_DIASBLED));
-		
+
 		e1.start();
 		eh1.start();
 		floorThread.start();
@@ -330,8 +336,8 @@ public class Iteration5Test {
 		}
 
 	}
-	
-	@Test 
+
+	@Test
 	public void testAlgorithmOneElevatorTwoRequests() {
 		Scheduler sch = new Scheduler(1);
 
@@ -342,16 +348,16 @@ public class Iteration5Test {
 		Floor floor = new Floor(algorithmTestFile, floorHandlerPort, Scheduler.TIMEOUT_DIASBLED);
 		Thread floorThread = new Thread(floor, "Floor");
 		Thread floorHandlerThread = new Thread(new FloorHandler(sch, floorHandlerPort, Scheduler.TIMEOUT_DIASBLED));
-		
+
 		e1.start();
 		eh1.start();
 		floorThread.start();
 		floorHandlerThread.start();
-		
+
 		ArrayList<Integer> expected = new ArrayList<>(Arrays.asList(5, 5, 7, 9));
-		while(e1.isAlive()) {
+		while (e1.isAlive()) {
 			// handle only the first two requests from the file
-			if(floor.getRequestsHandled() == 3) {
+			if (floor.getRequestsHandled() == 3) {
 				floor.closeScanner();
 			}
 			try {
@@ -359,13 +365,238 @@ public class Iteration5Test {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			if(sch.getElevatorQueue().get(0).equals(expected)) {
+			if (sch.getElevatorQueue().get(0).equals(expected)) {
 				floor.closeScanner();
 				return;
 			}
 		}
+	}
+
+	@Test
+	public void testAlgorithmDistribution() {
+		Scheduler sch = new Scheduler(4);
+
+		Elevator ev1 = new Elevator(elevatorPort, 1, Scheduler.TIMEOUT_DIASBLED);
+		Thread e1 = new Thread(ev1, "0");
+		Thread eh1 = new Thread(new ElevatorHandler(sch, elevatorPort, Scheduler.TIMEOUT_DIASBLED), "0");
+
+		incrementPorts();
+
+		Elevator ev2 = new Elevator(elevatorPort, 2, Scheduler.TIMEOUT_DIASBLED);
+		Thread e2 = new Thread(ev2, "1");
+		Thread eh2 = new Thread(new ElevatorHandler(sch, elevatorPort, Scheduler.TIMEOUT_DIASBLED), "1");
+
+		incrementPorts();
+
+		Elevator ev3 = new Elevator(elevatorPort, 3, Scheduler.TIMEOUT_DIASBLED);
+		Thread e3 = new Thread(ev3, "2");
+		Thread eh3 = new Thread(new ElevatorHandler(sch, elevatorPort, Scheduler.TIMEOUT_DIASBLED), "2");
+
+		incrementPorts();
+
+		Elevator ev4 = new Elevator(elevatorPort, 4, Scheduler.TIMEOUT_DIASBLED);
+		Thread e4 = new Thread(ev4, "3");
+		Thread eh4 = new Thread(new ElevatorHandler(sch, elevatorPort, Scheduler.TIMEOUT_DIASBLED), "3");
+
+		Floor floor = new Floor(algorithmTestFile, floorHandlerPort, Scheduler.TIMEOUT_DIASBLED);
+		Thread floorThread = new Thread(floor, "Floor");
+		Thread floorHandlerThread = new Thread(new FloorHandler(sch, floorHandlerPort, Scheduler.TIMEOUT_DIASBLED));
+
+		eh1.start();
+		eh2.start();
+		eh3.start();
+		eh4.start();
+
+		e1.start();
+		e2.start();
+		e3.start();
+		e4.start();
+
+		floorThread.start();
+		floorHandlerThread.start();
+
+		ArrayList<Integer> expectedEV1 = new ArrayList<>(Arrays.asList(2, 5));
+		ArrayList<Integer> expectedEV2 = new ArrayList<>(Arrays.asList(3, 7));
+		ArrayList<Integer> expectedEV3 = new ArrayList<>(Arrays.asList(5, 9));
+		ArrayList<Integer> expectedEV4 = new ArrayList<>(Arrays.asList(7, 11));
+
+		boolean ev1Pass = false;
+		boolean ev2Pass = false;
+		boolean ev3Pass = false;
+		boolean ev4Pass = false;
+
+		while (e1.isAlive()) {
+			if (floor.getRequestsHandled() == 4) {
+				floor.closeScanner();
+			}
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			if (sch.getElevatorQueue().get(0).equals(expectedEV1) && !ev1Pass) {
+				ev1Pass = true;
+			}
+			if (sch.getElevatorQueue().get(1).equals(expectedEV2) && !ev2Pass) {
+				ev2Pass = true;
+			}
+			if (sch.getElevatorQueue().get(2).equals(expectedEV3) && !ev3Pass) {
+				ev3Pass = true;
+			}
+			if (sch.getElevatorQueue().get(3).equals(expectedEV4) && !ev4Pass) {
+				ev4Pass = true;
+			}
+
+			if (ev1Pass && ev2Pass && ev3Pass & ev4Pass) {
+				floor.closeScanner();
+				return;
+			}
+		}
+	}
+
+	@Test
+	public void testAlgorithmBestElevator() {
+		Scheduler sch = new Scheduler(4);
+
+		Elevator ev1 = new Elevator(elevatorPort, 1, Scheduler.TIMEOUT_DIASBLED);
+		Thread e1 = new Thread(ev1, "0");
+		Thread eh1 = new Thread(new ElevatorHandler(sch, elevatorPort, Scheduler.TIMEOUT_DIASBLED), "0");
+
+		incrementPorts();
+
+		Elevator ev2 = new Elevator(elevatorPort, 2, Scheduler.TIMEOUT_DIASBLED);
+		Thread e2 = new Thread(ev2, "1");
+		Thread eh2 = new Thread(new ElevatorHandler(sch, elevatorPort, Scheduler.TIMEOUT_DIASBLED), "1");
+
+		incrementPorts();
+
+		Elevator ev3 = new Elevator(elevatorPort, 3, Scheduler.TIMEOUT_DIASBLED);
+		Thread e3 = new Thread(ev3, "2");
+		Thread eh3 = new Thread(new ElevatorHandler(sch, elevatorPort, Scheduler.TIMEOUT_DIASBLED), "2");
+
+		incrementPorts();
+
+		Elevator ev4 = new Elevator(elevatorPort, 4, Scheduler.TIMEOUT_DIASBLED);
+		Thread e4 = new Thread(ev4, "3");
+		Thread eh4 = new Thread(new ElevatorHandler(sch, elevatorPort, Scheduler.TIMEOUT_DIASBLED), "3");
+
+		Floor floor = new Floor(algorithmTestFile, floorHandlerPort, Scheduler.TIMEOUT_DIASBLED);
+		Thread floorThread = new Thread(floor, "Floor");
+		Thread floorHandlerThread = new Thread(new FloorHandler(sch, floorHandlerPort, Scheduler.TIMEOUT_DIASBLED));
+
+		eh1.start();
+		eh2.start();
+		eh3.start();
+		eh4.start();
+
+		e1.start();
+		e2.start();
+		e3.start();
+		e4.start();
+
+		floorThread.start();
+		floorHandlerThread.start();
+
+		ArrayList<Integer> expectedEV1 = new ArrayList<>(Arrays.asList(5, 6, 7));
+		ArrayList<Integer> expectedEV2 = new ArrayList<>(Arrays.asList(3, 7));
+		ArrayList<Integer> expectedEV3 = new ArrayList<>(Arrays.asList(5, 9));
+		ArrayList<Integer> expectedEV4 = new ArrayList<>(Arrays.asList(7, 11));
+
+		boolean ev1Pass = false;
+		boolean ev2Pass = false;
+		boolean ev3Pass = false;
+		boolean ev4Pass = false;
+
+		while (e1.isAlive()) {
+			if (floor.getRequestsHandled() == 5) {
+				floor.closeScanner();
+			}
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			if (sch.getElevatorQueue().get(0).equals(expectedEV1) && !ev1Pass) {
+				ev1Pass = true;
+			}
+			if (sch.getElevatorQueue().get(1).equals(expectedEV2) && !ev2Pass) {
+				ev2Pass = true;
+			}
+			if (sch.getElevatorQueue().get(2).equals(expectedEV3) && !ev3Pass) {
+				ev3Pass = true;
+			}
+			if (sch.getElevatorQueue().get(3).equals(expectedEV4) && !ev4Pass) {
+				ev4Pass = true;
+			}
+
+			if (ev1Pass && ev2Pass && ev3Pass & ev4Pass) {
+				floor.closeScanner();
+				return;
+			}
+		}
+	}
+
+	@Test
+	public void testAlgorithmOppositeDirection() {
+		Scheduler sch = new Scheduler(2);
+
+		Elevator ev1 = new Elevator(elevatorPort, 1, Scheduler.TIMEOUT_DIASBLED);
+		Thread e1 = new Thread(ev1, "0");
+		Thread eh1 = new Thread(new ElevatorHandler(sch, elevatorPort, Scheduler.TIMEOUT_DIASBLED), "0");
+
+		incrementPorts();
+
+		Elevator ev2 = new Elevator(elevatorPort, 2, Scheduler.TIMEOUT_DIASBLED);
+		Thread e2 = new Thread(ev2, "1");
+		Thread eh2 = new Thread(new ElevatorHandler(sch, elevatorPort, Scheduler.TIMEOUT_DIASBLED), "1");
+
+		Floor floor = new Floor(algorithmOppositeTestFile, floorHandlerPort, Scheduler.TIMEOUT_DIASBLED);
+		Thread floorThread = new Thread(floor, "Floor");
+		Thread floorHandlerThread = new Thread(new FloorHandler(sch, floorHandlerPort, Scheduler.TIMEOUT_DIASBLED));
+
+		eh1.start();
+		eh2.start();
+		e1.start();
+		e2.start();
+
+		floorThread.start();
+		floorHandlerThread.start();
+
+		ArrayList<Integer> expectedEV1 = new ArrayList<>(Arrays.asList(5));
+		ArrayList<Integer> expectedEV2 = new ArrayList<>(Arrays.asList(3, 7));
+		ArrayList<Integer> expectedOppositeDirection = new ArrayList<>(Arrays.asList(4, 2));
 		
+		boolean ev1Pass = false;
+		boolean ev2Pass = false;
+		boolean oppositeDirectionPass = false;
 		
+		while(e1.isAlive()) {
+			try {
+				System.out.println(sch.getElevatorQueue());
+				Thread.sleep(100);
+				if (floor.getRequestsHandled() == 3) {
+					floor.closeScanner();
+				}	
+				
+				if (sch.getElevatorQueue().get(0).equals(expectedEV1) && !ev1Pass) {
+					ev1Pass = true;
+				}
+				if (sch.getElevatorQueue().get(1).equals(expectedEV2) && !ev2Pass) {
+					ev2Pass = true;
+				}
+				if (sch.getElevatorQueue().get(0).equals(expectedOppositeDirection) && !oppositeDirectionPass) {
+					oppositeDirectionPass = true;
+				}
+				if (ev1Pass && ev2Pass && oppositeDirectionPass) {
+					floor.closeScanner();
+					return;
+				}
+				
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
 	}
 
 }

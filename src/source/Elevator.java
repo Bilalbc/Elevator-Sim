@@ -176,12 +176,13 @@ public class Elevator implements Runnable {
 				if (destination != 0 && errorCode == 0) {
 					if (destination > currentFloor) { // check if the elevator needs to move up or down
 						currentState = ElevatorStates.MOVINGUP;
+						Thread.sleep(TIME_TO_MOVE);
 					} else if (destination < currentFloor) {
 						currentState = ElevatorStates.MOVINGDOWN;
+						Thread.sleep(TIME_TO_MOVE);
 					} else {
 						System.out.println("Elevator" + assignedNum + " is already on destination floor");
 					}
-					Thread.sleep(TIME_TO_MOVE);
 					
 					if (currentState.equals(ElevatorStates.MOVINGUP)) {
 						currentFloor++;
