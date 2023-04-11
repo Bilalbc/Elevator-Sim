@@ -265,6 +265,14 @@ public class Scheduler {
 		if (elevatorState == Elevator.ElevatorStates.TIMEOUT)
 		{
 			System.out.println("Elevator " + elevatorNum + " has timed out before reaching next floor...elevator shutting down");
+			
+			//Takes outstanding requests and puts them in the message queue
+			for (Message m : this.elevatorRequests.get(elevatorNum - 1)) {
+				if (this.elevatorQueue.get(elevatorNum - 1).contains(m.startFloor())) {
+					this.messageQueue.add(m);
+				}
+			}
+			
 			this.elevatorQueue.get(elevatorNum-1).clear();
 		}
 		
