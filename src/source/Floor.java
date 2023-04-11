@@ -42,6 +42,7 @@ public class Floor implements Runnable {
 	private Scanner scanner;
 	private int requestsHandled; // Value for tracking requests read for testing
 	private boolean scannerActive;
+	private int handlerPort;
 	
 	
 	/**
@@ -56,20 +57,25 @@ public class Floor implements Runnable {
 	 * 
 	 * @param sch, Scheduler being used
 	 */
-	public Floor(File file) {
+	public Floor(File file, int port, boolean timeoutEnabled) {
 		this.floorRequests = file;
 		this.requestQueue = new ArrayList<Message>();
 		this.requestsComplete = false;
 		this.requestsHandled = 0;
+		this.handlerPort = port;
+		
 		try {
 			this.sendAndReceive = new DatagramSocket();
-			sendAndReceive.setSoTimeout(15000);
+			if(timeoutEnabled) {
+				sendAndReceive.setSoTimeout(15000);
+			}			
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
 
 		updateTimes();
 	}
+
 
 	/**
 	 * Helper method to randomly recalculate the time values for incoming requests.
@@ -220,7 +226,7 @@ public class Floor implements Runnable {
 
 				byte sendingData[] = byteStream.toByteArray();
 				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(),
-						FloorHandler.FLOOR_HANDLER_PORT); // Send to floor handler
+						handlerPort); // Send to floor handler
 
 				sendAndReceive.send(sending);
 
@@ -233,7 +239,7 @@ public class Floor implements Runnable {
 			} else {
 				byte sendingData[] = new byte[1];
 				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(),
-						FloorHandler.FLOOR_HANDLER_PORT); // send void message to notify that I want a message
+						handlerPort); // send void message to notify that I want a message
 				sendAndReceive.send(sending);
 
 				byte receivingData[] = new byte[FloorHandler.MAX_DATA_SIZE];
@@ -254,6 +260,7 @@ public class Floor implements Runnable {
 			}
 
 		} catch (IOException | ClassNotFoundException | InterruptedException e) {
+			e.printStackTrace();
 			System.exit(1);
 		}
 	}
@@ -343,7 +350,7 @@ public class Floor implements Runnable {
 
 	public static void main(String[] args) {
 		File file = new File("src//source//Requests.csv");
-		Thread f = new Thread(new Floor(file), "Floor");
+		Thread f = new Thread(new Floor(file, FloorHandler.FLOOR_HANDLER_PORT, Scheduler.TIMEOUT_ENABLED), "Floor");
 		f.start();
 	}
 }

@@ -25,7 +25,7 @@ public class FloorHandler implements Runnable {
 	private boolean send;
 
 	public static final int MAX_DATA_SIZE = 250;
-	public static final int TIMEOUT = 40000; // placeholder value for now
+	public static final int TIMEOUT = 15000; // placeholder value for now
 
 	public static final int FLOOR_HANDLER_PORT = 42;
 
@@ -36,12 +36,18 @@ public class FloorHandler implements Runnable {
 	 * @param scheduler, Scheduler to interact with
 	 */
 	public FloorHandler(Scheduler scheduler) {
+		this(scheduler, FLOOR_HANDLER_PORT, Scheduler.TIMEOUT_ENABLED);
+	}
+	
+	public FloorHandler(Scheduler scheduler, int port, boolean timeoutEnabled) {
 		this.scheduler = scheduler;
 		this.send = true;
-
+		
 		try {
-			socket = new DatagramSocket(FLOOR_HANDLER_PORT);
-			socket.setSoTimeout(TIMEOUT);
+			socket = new DatagramSocket(port);
+			if(timeoutEnabled) {
+				socket.setSoTimeout(TIMEOUT);
+			}		
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);

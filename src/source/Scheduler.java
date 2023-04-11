@@ -30,6 +30,10 @@ public class Scheduler {
 	public static final int ELEVATOR2 = 1;
 	public static final int ELEVATOR3 = 2;
 	public static final int ELEVATOR4 = 3;
+	
+	public static final boolean TIMEOUT_ENABLED = true;
+	public static final boolean TIMEOUT_DIASBLED = false;
+	
 
 	private ArrayList<Message> messageQueue;
 	private ArrayList<Message> replyQueue;
@@ -371,7 +375,7 @@ public class Scheduler {
 				if ((size > 2) && (elevatorQueue.get(closestElevator).get(size - 2)
 						- elevatorQueue.get(closestElevator).get(size - 1) < 0)) {
 					Collections.reverse(elevatorQueue.get(closestElevator).subList(0, size - 3));
-				} else if ((size > 2) && (elevatorQueue.get(closestElevator).get(0)
+				} else if ((size > 3) && (elevatorQueue.get(closestElevator).get(0)
 						- elevatorQueue.get(closestElevator).get(1) < 0)) {
 					Collections.reverse(elevatorQueue.get(closestElevator).subList(2, size - 1));
 				} else {
@@ -380,12 +384,11 @@ public class Scheduler {
 			}
 			// if elevator is moving up, sort in ascending order 
 			else if (elevatorStates.get(closestElevator) == ElevatorStates.MOVINGUP) {
-				
 				if ((size > 2) && (elevatorQueue.get(closestElevator).get(size - 2)
-						- elevatorQueue.get(closestElevator).get(size - 1) < 0)) {
+						- elevatorQueue.get(closestElevator).get(size - 1) > 0)) {
 					Collections.reverse(elevatorQueue.get(closestElevator).subList(0, size - 3));
-				} else if ((size > 2) && (elevatorQueue.get(closestElevator).get(0)
-						- elevatorQueue.get(closestElevator).get(1) < 0)) {
+				} else if ((size > 3) && (elevatorQueue.get(closestElevator).get(0)
+						- elevatorQueue.get(closestElevator).get(1) > 0)) {
 					Collections.reverse(elevatorQueue.get(closestElevator).subList(2, size - 1));
 				} else {
 					Collections.sort(elevatorQueue.get(closestElevator));
@@ -551,10 +554,10 @@ public class Scheduler {
 		Scheduler s = new Scheduler();
 		Thread fh = new Thread(new FloorHandler(s));
 
-		Thread eh1 = new Thread(new ElevatorHandler(s, 69), "0");
-		Thread eh2 = new Thread(new ElevatorHandler(s, 70), "1");
-		Thread eh3 = new Thread(new ElevatorHandler(s, 71), "2");
-		Thread eh4 = new Thread(new ElevatorHandler(s, 72), "3");
+		Thread eh1 = new Thread(new ElevatorHandler(s, 69, TIMEOUT_ENABLED), "0");
+		Thread eh2 = new Thread(new ElevatorHandler(s, 70, TIMEOUT_ENABLED), "1");
+		Thread eh3 = new Thread(new ElevatorHandler(s, 71, TIMEOUT_ENABLED), "2");
+		Thread eh4 = new Thread(new ElevatorHandler(s, 72, TIMEOUT_ENABLED), "3");
 
 		fh.start();
 		eh1.start();

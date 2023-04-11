@@ -45,10 +45,13 @@ public class Elevator implements Runnable {
 	 * 
 	 * @param sch, Scheduler being used
 	 */
-	public Elevator(int portNum, int assignedNum) {
+	public Elevator(int portNum, int assignedNum, boolean timeoutEnabled) {
+		
 		try {
 			this.sendAndReceive = new DatagramSocket();
-			sendAndReceive.setSoTimeout(15000);
+			if(timeoutEnabled) {
+				sendAndReceive.setSoTimeout(15000);
+			}			
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
@@ -60,6 +63,7 @@ public class Elevator implements Runnable {
 		this.lightsGrid = new boolean[NUM_FLOORS];
 		this.errorCode = 0;
 	}
+
 
 	private void sendAndGetMessage(PassStateEvent pse, boolean send) {
 		DatagramPacket sending; // both packets
@@ -187,6 +191,7 @@ public class Elevator implements Runnable {
 					}
 				} else if(errorCode == 1) {
 					currentState = ElevatorStates.STUCKOPEN;
+					errorCode = 0;
 				} else if(errorCode == 2) { 
 					// delay so the TimeoutTimer can interrupt the elevator thread
 					Thread.sleep(TIME_TO_MOVE + 1000);
@@ -271,10 +276,10 @@ public class Elevator implements Runnable {
 
 	public static void main(String[] args) {
 
-		Thread e1 = new Thread(new Elevator(69, 1), "0");
-		Thread e2 = new Thread(new Elevator(70, 2), "1");
-		Thread e3 = new Thread(new Elevator(71, 3), "2");
-		Thread e4 = new Thread(new Elevator(72, 4), "3");
+		Thread e1 = new Thread(new Elevator(69, 1, Scheduler.TIMEOUT_ENABLED), "0");
+		Thread e2 = new Thread(new Elevator(70, 2, Scheduler.TIMEOUT_ENABLED), "1");
+		Thread e3 = new Thread(new Elevator(71, 3, Scheduler.TIMEOUT_ENABLED), "2");
+		Thread e4 = new Thread(new Elevator(72, 4, Scheduler.TIMEOUT_ENABLED), "3");
 
 		e1.start();
 		e2.start();
