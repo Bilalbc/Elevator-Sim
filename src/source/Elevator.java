@@ -30,7 +30,7 @@ public class Elevator implements Runnable {
 	private boolean running; 
 	
 	private static final int TIME_TO_MOVE = 4083;
-	private static final int TIME_DOORS = 1000;
+	private static final int TIME_DOORS = 3712;
 	private static final int MAX_DATA_SIZE = 250;	
 	
 	public static enum ElevatorStates {
@@ -133,21 +133,21 @@ public class Elevator implements Runnable {
 		Thread tThread = new Thread(new TimeoutTimer(this), "Timer");
 		tThread.start();
 
-		while (!Thread.currentThread().isInterrupted()) {
+		while (true) {
 			try {
 				checkDoorsStuck();
-				// Lets the scheduler know which floor it is on and its state
-				sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), true);
-
-				// If the elevator has reached its destination or does not have one(0)
-				sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), false);
-
-				Thread.sleep(100);
+				
+				if(currentState == ElevatorStates.TIMEOUT) {
+					sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum, true), true);
+					sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), false);
+				}
 				// If timeout occurs, break out and end the thread.
-				if (currentState == ElevatorStates.TIMEOUT) {
+				else{
+					// Lets the scheduler know which floor it is on and its state
 					sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), true);
-					sendAndGetMessage(new PassStateEvent(), false);
-					Thread.currentThread().interrupt();
+					// If the elevator has reached its destination or does not have one(0)
+					sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), false);
+					Thread.sleep(100);		
 				}
 
 				if (destination == currentFloor && currentState != ElevatorStates.DOORSCLOSED) {
@@ -185,7 +185,7 @@ public class Elevator implements Runnable {
 					errorCode = 0;
 				} else if(errorCode == 2) { 
 					// delay so the TimeoutTimer can interrupt the elevator thread
-					Thread.sleep(TIME_TO_MOVE + 1000);
+					Thread.sleep(TIME_TO_MOVE + 5000);
 				}
 				tThread.interrupt();
 			} catch (InterruptedException e) {

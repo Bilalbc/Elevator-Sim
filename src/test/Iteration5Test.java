@@ -742,12 +742,4 @@ public class Iteration5Test {
 			}
 		}
 	}
-	
-	/*aditional test cases 
-	 * test each of the priorities for the elevator
-	 * so far i tested highest priority as empty elevator and 
-	 * scheduler finds closes elevator in distance 
-	 * and scheduler does not schedule if elevator is moving in opposite direction
-	 */
-
 }

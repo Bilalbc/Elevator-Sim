@@ -68,9 +68,10 @@ public class ElevatorHandler implements Runnable {
 	 */
 	@Override
 	public void run() {
-		while (!error) {
-			sendAndReceieve();
+		while(true) {
+			sendAndReceieve();			
 		}
+		
 	}
 
 	/**
@@ -97,11 +98,17 @@ public class ElevatorHandler implements Runnable {
 
 		PassStateEvent pse = (PassStateEvent) o;
 
-		if(pse.isError()) {
-			this.error = true;
-		} else {
+		// if the elevator is in an error state, dont send
+		// this setup allows for a message to scheduler to be sent when an 
+		// elevator first encounters an error, so the sch can update the state, 
+		// but not for subsequent messages
+		if(!error){
 			scheduler.passState(pse);			
 		}
+		
+		if(pse.isError()) {
+			this.error = true;	
+		} 
 	}
 
 	/**
@@ -126,7 +133,9 @@ public class ElevatorHandler implements Runnable {
 				replyData = new byte[1];
 				replyData[0] = (byte) 1;
 
-				passStateHandler(data);
+				if(!error) {
+					passStateHandler(data);					
+				}
 
 				this.send = false;
 			} else {

@@ -44,6 +44,8 @@ public class Scheduler {
 
 	private boolean closed = false;
 	private boolean requestsComplete = false;
+	
+	private int numElevators;
 
 	public static enum SchedulerStates {
 		WAITING, RECEIVING, FAILURE, SENDING
@@ -71,6 +73,7 @@ public class Scheduler {
 		this.elevatorRequests = new HashMap<>();
 		this.elevatorStates = new ArrayList<>();
 		this.elevatorFloors = new ArrayList<>();
+		this.numElevators = numElevators;
 		
 		for(int i = 0; i < numElevators; i++) {
 			this.elevatorRequests.put(i, new ArrayList<Message>());
@@ -412,14 +415,15 @@ public class Scheduler {
 	/**
 	 * Helper method to determine whether the program is complete.
 	 * 
-	 * checks if: All the elevators are DOORSCLOSED All the elevator requests have
-	 * been handled The Floor has notified the requests are complete
+	 * checks if: All the elevators are DOORSCLOSED, All the elevator requests have
+	 * been handled or are TIMEOUT, The Floor has notified the requests are complete
 	 * 
 	 * @return boolean : Whether the program is complete or not
 	 */
 	private boolean checkFinished() {
 		boolean elevatorsComplete = true;
 		boolean elevatorStatesClosed = true;
+		boolean elevatorsTimedOut = true;
 
 		for (Elevator.ElevatorStates i : elevatorStates) {
 			if (!(i == Elevator.ElevatorStates.DOORSCLOSED)) {
@@ -427,13 +431,21 @@ public class Scheduler {
 			}
 		}
 
-		for (ArrayList<Integer> i : elevatorQueue.values()) {
-			if (i.size() > 0) {
+		// an active elevator is one that is not timed out and has something to do 
+		// elevatorsComplete if all the elevators are inactive (either timed out or 
+		// have nothing to do
+		for (int i = 0; i < elevatorQueue.size(); i++) {
+			if(elevatorQueue.get(i).size() != 0) {
 				elevatorsComplete = false;
+			}
+			if (elevatorStates.get(i) == ElevatorStates.TIMEOUT ) {
+				elevatorsComplete = true;
+			} else {
+				elevatorsTimedOut = false;
 			}
 		}
 
-		if (this.requestsComplete && elevatorStatesClosed && elevatorsComplete) {
+		if ((this.requestsComplete && elevatorStatesClosed && elevatorsComplete) || elevatorsTimedOut) {
 			return true;
 		}
 		return false;
@@ -566,10 +578,10 @@ public class Scheduler {
 		Scheduler s = new Scheduler();
 		Thread fh = new Thread(new FloorHandler(s));
 
-		Thread eh1 = new Thread(new ElevatorHandler(s, 69, TIMEOUT_ENABLED), "0");
-		Thread eh2 = new Thread(new ElevatorHandler(s, 70, TIMEOUT_ENABLED), "1");
-		Thread eh3 = new Thread(new ElevatorHandler(s, 71, TIMEOUT_ENABLED), "2");
-		Thread eh4 = new Thread(new ElevatorHandler(s, 72, TIMEOUT_ENABLED), "3");
+		Thread eh1 = new Thread(new ElevatorHandler(s, 69), "0");
+		Thread eh2 = new Thread(new ElevatorHandler(s, 70), "1");
+		Thread eh3 = new Thread(new ElevatorHandler(s, 71), "2");
+		Thread eh4 = new Thread(new ElevatorHandler(s, 72), "3");
 
 		fh.start();
 		eh1.start();

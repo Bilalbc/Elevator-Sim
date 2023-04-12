@@ -20,11 +20,7 @@ public class PassStateEvent implements Serializable {
 	private Elevator.ElevatorStates currentState;
 	private int assignedNum;
 	private boolean error;
-
-	public PassStateEvent() {
-		this.error = true;
-	}
-
+	
 	/**
 	 * Constructor that initializes the object state.
 	 * 
@@ -37,6 +33,21 @@ public class PassStateEvent implements Serializable {
 		this.currentState = currentState;
 		this.assignedNum = assignedNum;
 		this.error = false;
+	}
+	
+	/**
+	 * Constructor that initializes the object state and error state.
+	 * 
+	 * @param currentFloor of type in
+	 * @param currentState of type Elevator.ElevatorStates
+	 * @param assignedNum  int
+	 * @param error boolean 
+	 */
+	public PassStateEvent(int currentFloor, Elevator.ElevatorStates currentState, int assignedNum, boolean error) {
+		this.currentFloor = currentFloor;
+		this.currentState = currentState;
+		this.assignedNum = assignedNum;
+		this.error = error;
 	}
 
 	/**

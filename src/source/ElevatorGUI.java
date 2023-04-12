@@ -23,8 +23,8 @@ import source.Elevator.ElevatorStates;
 
 public class ElevatorGUI extends JFrame implements ElevatorView {
 	
-    public final static int FRAME_WIDTH = 1500;
-    public final static int FRAME_HEIGHT = 980;
+    public final static int FRAME_WIDTH = 1000;
+    public final static int FRAME_HEIGHT = 700;
     public final static int GRID_X = 22;
     public final static int GRID_Y = 4;
     
