@@ -25,7 +25,7 @@ public class FloorHandler implements Runnable {
 	private boolean send;
 
 	public static final int MAX_DATA_SIZE = 250;
-	public static final int TIMEOUT = 15000; // placeholder value for now
+	public static final int TIMEOUT = 40000; // placeholder value for now
 
 	public static final int FLOOR_HANDLER_PORT = 42;
 
@@ -39,6 +39,14 @@ public class FloorHandler implements Runnable {
 		this(scheduler, FLOOR_HANDLER_PORT, Scheduler.TIMEOUT_ENABLED);
 	}
 	
+	/**
+	 * Overloaded constructor to allow specification of port number and managing timeouts for testing
+	 * 
+	 * @param scheduler, Scheduler to interact with
+	 * @param port, port for socket
+	 * @param timeoutEnabled, if socket timeouts are enabled
+	 * 
+	 */
 	public FloorHandler(Scheduler scheduler, int port, boolean timeoutEnabled) {
 		this.scheduler = scheduler;
 		this.send = true;

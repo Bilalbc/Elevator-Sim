@@ -27,8 +27,8 @@ public class Elevator implements Runnable {
 	private int handlerPort;
 	private int errorCode;
 	private DatagramSocket sendAndReceive;
-
-	private static final int NUM_FLOORS = 22;
+	private boolean running; 
+	
 	private static final int TIME_TO_MOVE = 4083;
 	private static final int TIME_DOORS = 1000;
 	private static final int MAX_DATA_SIZE = 250;	
@@ -109,6 +109,8 @@ public class Elevator implements Runnable {
 						errorCode = 1;
 					}
 					this.destination = data % 100; // 10s and 1s digit contain destination floor
+				} else {
+					this.destination = 0;
 				}
 			}
 
@@ -140,20 +142,14 @@ public class Elevator implements Runnable {
 				// If the elevator has reached its destination or does not have one(0)
 				sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), false);
 
+				Thread.sleep(100);
 				// If timeout occurs, break out and end the thread.
 				if (currentState == ElevatorStates.TIMEOUT) {
 					sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), true);
-					Thread.sleep(100000);
-					/**
-					 *	removed the interrupt here, but may need to put it back or find another way to properly exit the while loop (break maybe)
-					 * 
-					 * 
-					 * 
-					 * 
-					 */
+					sendAndGetMessage(new PassStateEvent(), false);
+					Thread.currentThread().interrupt();
 				}
 
-				Thread.sleep(100);
 				if (destination == currentFloor && currentState != ElevatorStates.DOORSCLOSED) {
 					currentState = ElevatorStates.STOPPED;
 					Thread.sleep(TIME_DOORS);
@@ -176,8 +172,6 @@ public class Elevator implements Runnable {
 					} else if (destination < currentFloor) {
 						currentState = ElevatorStates.MOVINGDOWN;
 						Thread.sleep(TIME_TO_MOVE);
-					} else {
-						System.out.println("Elevator" + assignedNum + " is already on destination floor");
 					}
 					
 					if (currentState.equals(ElevatorStates.MOVINGUP)) {
@@ -194,8 +188,6 @@ public class Elevator implements Runnable {
 					Thread.sleep(TIME_TO_MOVE + 1000);
 				}
 				tThread.interrupt();
-				//System.out.println(
-				//		"Elevator " + assignedNum + " is on floor " + currentFloor + ". Destination is " + destination);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -270,6 +262,14 @@ public class Elevator implements Runnable {
 	public int getDestinationFloor() {
 		return this.destination;
 	}
+	
+	/**
+	 * Method used to close sockets for testing purposes
+	 */
+	public void closeSockets() {
+		sendAndReceive.close();
+	}
+
 
 	public static void main(String[] args) {
 
@@ -283,12 +283,4 @@ public class Elevator implements Runnable {
 		e3.start();
 		e4.start();
 	}
-	
-	/**
-	 * Method used to close sockets for testing purposes
-	 */
-	public void closeSockets() {
-		sendAndReceive.close();
-	}
-
 }

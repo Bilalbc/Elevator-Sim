@@ -22,20 +22,29 @@ import source.Scheduler.SchedulerStates;
 
 public class Iteration5Test {
 
+	// Test Files
 	private File badTestFile = new File("src//test//BadTestData.csv");
 	private File badTestResortFile = new File("src//test//BadTestDataResort.csv");
 	private File goodTestFile = new File("src//test//GoodTestData.csv");
 	private File algorithmTestFile = new File("src//test//AlgorithmTest.csv");
-
 	private File algorithmOppositeTestFile = new File("src//test//AlgorithmOppositeTestData.csv");
+
+	// Port numbers 49152–65535 are ephemeral, and wont interfere with other
+	// processes
 	private static int elevatorPort = 51000;
 	private static int floorHandlerPort = 50000;
 
+	/**
+	 * Run before each test
+	 */
 	@BeforeEach
 	public void initialize() {
 		incrementPorts();
 	}
 
+	/**
+	 * Increment the ports to avoid errors with reusing same port numbers
+	 */
 	private void incrementPorts() {
 		elevatorPort++;
 		floorHandlerPort++;
@@ -49,8 +58,9 @@ public class Iteration5Test {
 	 */
 	@Test
 	public void testElevatorErrorHandling() {
-		System.out.println(elevatorPort);
-		System.out.println(floorHandlerPort);
+
+		System.out.println("-=-=-=-=-= testElevatorErrorHandling =-=-=-=-=-=-");
+
 		Scheduler sch = new Scheduler(1);
 
 		Elevator ev = new Elevator(elevatorPort, 1, Scheduler.TIMEOUT_DIASBLED);
@@ -76,14 +86,14 @@ public class Iteration5Test {
 
 			while (e1.isAlive()) {
 				if (ev.getCurrentFloor() == ev.getDestinationFloor() && !arrivedAtDestination) {
-					System.out.println("0");
 					arrivedAtDestination = true;
+					System.out.println("0");
 				}
 				if (ev.getcurrentState() == ElevatorStates.STUCKOPEN && !fixedDoors) {
-					System.out.println("1");
 					Thread.sleep(2050);
 					if (ev.getcurrentState() == ElevatorStates.DOORSCLOSED) {
 						fixedDoors = true;
+						System.out.println("1");
 					}
 				}
 				if (ev.getcurrentState() == ElevatorStates.TIMEOUT && !elevatorStuck) {
@@ -91,15 +101,17 @@ public class Iteration5Test {
 					elevatorStuck = true;
 				}
 				if (arrivedAtDestination && fixedDoors && elevatorStuck) {
-					System.out.println("Hello");
 					break;
 				}
 			}
 			assertTrue(arrivedAtDestination);
 			assertTrue(fixedDoors);
 			assertTrue(elevatorStuck);
-
-			floor.closeScanner();
+			
+			e1.stop();
+			eh1.stop();
+			floorThread.stop();
+			floorHandlerThread.stop();
 
 		} catch (InterruptedException e) {
 			e.printStackTrace();
@@ -116,7 +128,9 @@ public class Iteration5Test {
 	 */
 	@Test
 	public void testFloorPorts() {
-		System.out.println("---------------");
+
+		System.out.println("-=-=-=-=-= testFloorPorts =-=-=-=-=-=-");
+
 		try {
 			Scheduler sch = new Scheduler(1);
 
@@ -139,8 +153,12 @@ public class Iteration5Test {
 			Message m = utilFloor.createRequest(reader);
 			Thread.sleep(2000);
 			assertTrue(m.equals(sch.getElevatorRequests().get(0).get(0)));
-
-			floor.closeScanner();
+			
+			e1.stop();
+			eh1.stop();
+			floorThread.stop();
+			floorHandlerThread.stop();
+			reader.close();
 		} catch (FileNotFoundException | InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -157,7 +175,8 @@ public class Iteration5Test {
 
 	@Test
 	public void testElevatorPorts() {
-		System.out.println("---------------");
+
+		System.out.println("-=-=-=-=-= testElevatorPorts =-=-=-=-=-=-");
 
 		Scheduler sch = new Scheduler(1);
 
@@ -184,8 +203,11 @@ public class Iteration5Test {
 
 		System.out.println(floor.getLatestReturned());
 		assertTrue(m.getReturnMessage().equals(floor.getLatestReturned().getReturnMessage()));
-
-		floor.closeScanner();
+		
+		e1.stop();
+		eh1.stop();
+		floorThread.stop();
+		floorHandlerThread.stop();
 	}
 
 	/**
@@ -196,25 +218,11 @@ public class Iteration5Test {
 	 */
 	@Test
 	public void testIncorrectFormat() {
-		System.out.println("============ testIncorrectFormat ============");
 
-		System.out.println(elevatorPort);
-		System.out.println(floorHandlerPort);
-		Scheduler sch = new Scheduler(1);
-
-		Elevator ev = new Elevator(elevatorPort, 1, Scheduler.TIMEOUT_DIASBLED);
-		Thread e1 = new Thread(ev, "0");
-		Thread eh1 = new Thread(new ElevatorHandler(sch, elevatorPort, Scheduler.TIMEOUT_DIASBLED), "0");
+		System.out.println("-=-=-=-=-= testIncorrectFormat =-=-=-=-=-=-");
 
 		Floor floor = new Floor(badTestFile, floorHandlerPort, Scheduler.TIMEOUT_DIASBLED);
-		Thread floorThread = new Thread(floor, "Floor");
-		Thread floorHandlerThread = new Thread(new FloorHandler(sch, floorHandlerPort, Scheduler.TIMEOUT_DIASBLED));
-
-		e1.start();
-		eh1.start();
-		floorThread.start();
-		floorHandlerThread.start();
-
+		
 		Scanner reader = new Scanner("18as:21:dd, 1, UP, 3, 0");
 		floor.createRequest(reader);
 
@@ -223,8 +231,6 @@ public class Iteration5Test {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-
-		floor.closeScanner();
 	}
 
 	/**
@@ -240,10 +246,11 @@ public class Iteration5Test {
 	 */
 	@Test
 	public void testElevatorStates() {
-		Scheduler sch = new Scheduler(1);
 
-		System.out.println(elevatorPort);
-		System.out.println(floorHandlerPort);
+		System.out.println("-=-=-=-=-= testElevatorStates =-=-=-=-=-=-");
+
+		Scheduler sch = new Scheduler(1);
+		
 		Elevator ev = new Elevator(elevatorPort, 1, Scheduler.TIMEOUT_DIASBLED);
 		Thread e1 = new Thread(ev, "0");
 		Thread eh1 = new Thread(new ElevatorHandler(sch, elevatorPort, Scheduler.TIMEOUT_DIASBLED), "0");
@@ -279,9 +286,15 @@ public class Iteration5Test {
 
 			if (doorsClosed && movingUp && stopped && doorsOpen) {
 				floor.closeScanner();
+				e1.stop();
+				eh1.stop();
+				floorThread.stop();
+				floorHandlerThread.stop();
 				return; // will pass test if reaches return
 			}
 		}
+		
+		
 	}
 
 	/**
@@ -297,7 +310,8 @@ public class Iteration5Test {
 	 */
 	@Test
 	public void testSchedulerStates() {
-		System.out.println("============ testsSchedulerStates ============");
+
+		System.out.println("-=-=-=-=-= testSchedulerStates =-=-=-=-=-=-");
 
 		Scheduler sch = new Scheduler(1);
 
@@ -331,14 +345,33 @@ public class Iteration5Test {
 			}
 
 			if (waiting && receiving && sending) {
+				if(floor.getScanner() != null) {
+					floor.closeScanner();					
+				}
+				e1.stop();
+				eh1.stop();
+				floorThread.stop();
+				floorHandlerThread.stop();
 				return; // will pass test if reaches return
 			}
 		}
 
 	}
 
+	/**
+	 * Test to demonstrate an elevator receiving two requests, one with a start
+	 * floor within the range of the other. The Scheduler should be capable of
+	 * sorting the requests in the most efficient way, where it can make a stop to
+	 * being another request while carrying out another request.
+	 * 
+	 * Test passes if the Scheduler sorts the requests such that the elevator will
+	 * pick up the second request along the path of the first
+	 */
 	@Test
 	public void testAlgorithmOneElevatorTwoRequests() {
+
+		System.out.println("-=-=-=-=-= testAlgorithmOneElevatorTwoRequests =-=-=-=-=-=-");
+
 		Scheduler sch = new Scheduler(1);
 
 		Elevator ev = new Elevator(elevatorPort, 1, Scheduler.TIMEOUT_DIASBLED);
@@ -356,7 +389,7 @@ public class Iteration5Test {
 
 		ArrayList<Integer> expected = new ArrayList<>(Arrays.asList(5, 5, 7, 9));
 		while (e1.isAlive()) {
-			// handle only the first two requests from the file
+			// handle only the first three requests from the file
 			if (floor.getRequestsHandled() == 3) {
 				floor.closeScanner();
 			}
@@ -366,14 +399,26 @@ public class Iteration5Test {
 				e.printStackTrace();
 			}
 			if (sch.getElevatorQueue().get(0).equals(expected)) {
-				floor.closeScanner();
-				return;
+				e1.stop();
+				eh1.stop();
+				floorThread.stop();
+				floorHandlerThread.stop();
+				return; // test passes
 			}
 		}
 	}
 
+	/**
+	 * Tests that the scheduler will always provide highest priority in scheduling
+	 * to an elevator with no requests
+	 * 
+	 * Test passes if each elevator receives a request
+	 */
 	@Test
 	public void testAlgorithmDistribution() {
+
+		System.out.println("-=-=-=-=-= testAlgorithmDistribution =-=-=-=-=-=-");
+
 		Scheduler sch = new Scheduler(4);
 
 		Elevator ev1 = new Elevator(elevatorPort, 1, Scheduler.TIMEOUT_DIASBLED);
@@ -426,6 +471,7 @@ public class Iteration5Test {
 		boolean ev4Pass = false;
 
 		while (e1.isAlive()) {
+			// pass only 4 requests
 			if (floor.getRequestsHandled() == 4) {
 				floor.closeScanner();
 			}
@@ -448,14 +494,36 @@ public class Iteration5Test {
 			}
 
 			if (ev1Pass && ev2Pass && ev3Pass & ev4Pass) {
-				floor.closeScanner();
-				return;
+				eh1.stop();
+				eh2.stop();
+				eh3.stop();
+				eh4.stop();
+
+				e1.stop();
+				e2.stop();
+				e3.stop();
+				e4.stop();
+				
+				floorThread.stop();
+				floorHandlerThread.stop();
+				
+				return; // test passes
 			}
 		}
 	}
 
+	/**
+	 * Tests that the elevator is capable of finding the best elevator for a request
+	 * when all elevators have a request currently being handled
+	 * Tests the second priority for scheduling a new request
+	 * 
+	 * Passes if the elevator request goes to the best option for an elevator
+	 */
 	@Test
 	public void testAlgorithmBestElevator() {
+
+		System.out.println("-=-=-=-=-= testAlgorithmBestElevator =-=-=-=-=-=-");
+
 		Scheduler sch = new Scheduler(4);
 
 		Elevator ev1 = new Elevator(elevatorPort, 1, Scheduler.TIMEOUT_DIASBLED);
@@ -508,6 +576,7 @@ public class Iteration5Test {
 		boolean ev4Pass = false;
 
 		while (e1.isAlive()) {
+			// allow only the first 5 requests
 			if (floor.getRequestsHandled() == 5) {
 				floor.closeScanner();
 			}
@@ -530,14 +599,36 @@ public class Iteration5Test {
 			}
 
 			if (ev1Pass && ev2Pass && ev3Pass & ev4Pass) {
-				floor.closeScanner();
-				return;
+				eh1.stop();
+				eh2.stop();
+				eh3.stop();
+				eh4.stop();
+
+				e1.stop();
+				e2.stop();
+				e3.stop();
+				e4.stop();
+				
+				floorThread.stop();
+				floorHandlerThread.stop();
+				
+				return; // test passes
 			}
 		}
 	}
 
+	/**
+	 * Tests how the elevator schedules a request that starts in the opposite
+	 * direction that all the elevators are going
+	 * 
+	 * Test passes if the scheduler waits for one of the elevators to complete it's
+	 * current request before assigning it to the newly freed elevator
+	 */
 	@Test
 	public void testAlgorithmOppositeDirection() {
+
+		System.out.println("-=-=-=-=-= testAlgorithmOppositeDirection =-=-=-=-=-=-");
+
 		Scheduler sch = new Scheduler(2);
 
 		Elevator ev1 = new Elevator(elevatorPort, 1, Scheduler.TIMEOUT_DIASBLED);
@@ -572,8 +663,8 @@ public class Iteration5Test {
 
 		while (e1.isAlive()) {
 			try {
-				System.out.println(sch.getElevatorQueue());
 				Thread.sleep(100);
+				// allow only the first three requests
 				if (floor.getRequestsHandled() == 3) {
 					floor.closeScanner();
 				}
@@ -588,8 +679,16 @@ public class Iteration5Test {
 					oppositeDirectionPass = true;
 				}
 				if (ev1Pass && ev2Pass && oppositeDirectionPass) {
-					floor.closeScanner();
-					return;
+					eh1.stop();
+					eh2.stop();
+
+					e1.stop();
+					e2.stop();
+					
+					floorThread.stop();
+					floorHandlerThread.stop();
+					
+					return; // test passes
 				}
 
 			} catch (InterruptedException e) {
@@ -599,8 +698,18 @@ public class Iteration5Test {
 
 	}
 
+	/**
+	 * test if the Scheduler is capable of redistributing unstarted requests in the
+	 * event that one of the Elevators encounters a hard fault
+	 * 
+	 * test passes if the requests are placed back in the Message queue for
+	 * rescheduling
+	 */
 	@Test
 	public void testAlgorithmRedistributeOnFailure() {
+
+		System.out.println("-=-=-=-=-= testAlgorithmRedistributeOnFailure =-=-=-=-=-=-");
+
 		Scheduler sch = new Scheduler(1);
 
 		Elevator ev1 = new Elevator(elevatorPort, 1, Scheduler.TIMEOUT_DIASBLED);
@@ -623,9 +732,22 @@ public class Iteration5Test {
 		while (e1.isAlive()) {
 			if (floor.getRequestsHandled() == 3 && sch.getMessages().contains(expectedMessage1)
 					&& sch.getMessages().contains(expectedMessage2) && sch.getElevatorQueue().get(0).size() == 0) {
-				return;
+				eh1.stop();
+
+				e1.stop();
+				
+				floorThread.stop();
+				floorHandlerThread.stop();
+				return; // test passes
 			}
 		}
 	}
+	
+	/*aditional test cases 
+	 * test each of the priorities for the elevator
+	 * so far i tested highest priority as empty elevator and 
+	 * scheduler finds closes elevator in distance 
+	 * and scheduler does not schedule if elevator is moving in opposite direction
+	 */
 
 }

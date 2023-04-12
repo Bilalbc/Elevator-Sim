@@ -54,7 +54,7 @@ public class Scheduler {
 	private HashMap<Integer, ArrayList<Integer>> elevatorQueue;
 	private HashMap<Integer, ArrayList<Message>> elevatorRequests;
 
-	ElevatorGUI eg;
+	private ElevatorGUI eg;
 	
 	/**
 	 * Constructor for class Scheduler. Initializes messageQueue, replyQueue,
@@ -558,7 +558,7 @@ public class Scheduler {
 	 * Getter Method for Elevator Requests Map 
 	 * @return elevatorRrequests : HashMap<Integer, ArrayList<Message>>
 	 */
-	public synchronized HashMap<Integer, ArrayList<Message>> getElevatorRequests() {
+	public HashMap<Integer, ArrayList<Message>> getElevatorRequests() {
 		return elevatorRequests;
 	}
 

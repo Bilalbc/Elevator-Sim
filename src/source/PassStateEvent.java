@@ -19,6 +19,11 @@ public class PassStateEvent implements Serializable {
 	private int currentFloor;
 	private Elevator.ElevatorStates currentState;
 	private int assignedNum;
+	private boolean error;
+
+	public PassStateEvent() {
+		this.error = true;
+	}
 
 	/**
 	 * Constructor that initializes the object state.
@@ -31,6 +36,7 @@ public class PassStateEvent implements Serializable {
 		this.currentFloor = currentFloor;
 		this.currentState = currentState;
 		this.assignedNum = assignedNum;
+		this.error = false;
 	}
 
 	/**
@@ -61,10 +67,20 @@ public class PassStateEvent implements Serializable {
 	}
 
 	/**
+	 * Getter for error state
+	 * 
+	 * @return error : boolean representing elevator error state
+	 */
+	public boolean isError() {
+		return error;
+	}
+
+	/**
 	 * Override to String method
 	 */
 	@Override
 	public String toString() {
 		return "Elevator " + assignedNum + " on Floor " + currentFloor + ", current state " + currentState;
 	}
+
 }

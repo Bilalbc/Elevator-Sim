@@ -43,6 +43,9 @@ public class Floor implements Runnable {
 	private int requestsHandled; // Value for tracking requests read for testing
 	private boolean scannerActive;
 	private int handlerPort;
+	// values used to determine the delay between requests
+	private int minWaitTime; 
+	private int maxWaitTime;
 	
 	
 	/**
@@ -68,7 +71,12 @@ public class Floor implements Runnable {
 			this.sendAndReceive = new DatagramSocket();
 			if(timeoutEnabled) {
 				sendAndReceive.setSoTimeout(15000);
-			}			
+				minWaitTime = 2;
+				maxWaitTime = 10;
+			} else {
+				minWaitTime = 1;
+				maxWaitTime = 0;
+			}
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
@@ -97,8 +105,7 @@ public class Floor implements Runnable {
 			Calendar cal = Calendar.getInstance();
 			cal.setTimeInMillis(System.currentTimeMillis());
 			for (String[] row : rows) {
-				//int rand = (int) (Math.random() * 10) + 4;
-				int rand = 1;
+				int rand = (int) (Math.random() * maxWaitTime) + minWaitTime;
 				cal.add(Calendar.SECOND, rand);
 				row[0] = cal.get(Calendar.HOUR_OF_DAY) + ":" + cal.get(Calendar.MINUTE) + ":"
 						+ cal.get(Calendar.SECOND);
@@ -147,7 +154,6 @@ public class Floor implements Runnable {
 			setDelay(values[0]);
 		}
 		return req;
-
 	}
 
 	/**
@@ -340,14 +346,30 @@ public class Floor implements Runnable {
 		scannerActive = false;
 	}
 	
+	/**
+	 * Getter method for the last return message recieved from floorHandler, used for testing 
+	 * @return Message : last returned Message
+	 */
 	public Message getLatestReturned() {
 		return latestReturned;
 	}
 	
+	/**
+	 * Getter method for how many requests have been handled, used for testing 
+	 * @return int : number of requests handled
+	 */
 	public int getRequestsHandled() {
 		return requestsHandled;
 	}
 
+	/**
+	 * Getter method for scanner, used for testing
+	 * @return Scanner : scanner object
+	 */
+	public Scanner getScanner() {
+		return this.scanner;
+	}
+	
 	public static void main(String[] args) {
 		File file = new File("src//source//Requests.csv");
 		Thread f = new Thread(new Floor(file, FloorHandler.FLOOR_HANDLER_PORT, Scheduler.TIMEOUT_ENABLED), "Floor");
