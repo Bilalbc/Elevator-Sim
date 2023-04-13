@@ -30,6 +30,10 @@ public class Scheduler {
 	public static final int ELEVATOR2 = 1;
 	public static final int ELEVATOR3 = 2;
 	public static final int ELEVATOR4 = 3;
+	
+	public static final boolean TIMEOUT_ENABLED = true;
+	public static final boolean TIMEOUT_DIASBLED = false;
+	
 
 	private ArrayList<Message> messageQueue;
 	private ArrayList<Message> replyQueue;
@@ -40,6 +44,8 @@ public class Scheduler {
 
 	private boolean closed = false;
 	private boolean requestsComplete = false;
+	
+	private int numElevators;
 
 	public static enum SchedulerStates {
 		WAITING, RECEIVING, FAILURE, SENDING
@@ -49,36 +55,38 @@ public class Scheduler {
 
 	private HashMap<Integer, ArrayList<Integer>> elevatorQueue;
 	private HashMap<Integer, ArrayList<Message>> elevatorRequests;
+
+	private ElevatorGUI eg;
 	
 	/**
 	 * Constructor for class Scheduler. Initializes messageQueue, replyQueue,
 	 * elevatorFloors, elevatorStates and the elevatorQueue for all elevators.
 	 */
 	public Scheduler() {
+		this(4);
+	}
+	
+	public Scheduler(int numElevators) {
 		this.messageQueue = new ArrayList<>();
 		this.replyQueue = new ArrayList<>();
-		this.elevatorFloors = new ArrayList<>(Arrays.asList(0, 0, 0, 0));
-		this.elevatorStates = new ArrayList<>(
-				Arrays.asList(Elevator.ElevatorStates.DOORSCLOSED, Elevator.ElevatorStates.DOORSCLOSED,
-						Elevator.ElevatorStates.DOORSCLOSED, Elevator.ElevatorStates.DOORSCLOSED));
 		this.elevatorQueue = new HashMap<>();
 		this.elevatorRequests = new HashMap<>();
+		this.elevatorStates = new ArrayList<>();
+		this.elevatorFloors = new ArrayList<>();
+		this.numElevators = numElevators;
 		
-		this.elevatorQueue.put(ELEVATOR1, new ArrayList<Integer>());
-		this.elevatorQueue.put(ELEVATOR2, new ArrayList<Integer>());
-		this.elevatorQueue.put(ELEVATOR3, new ArrayList<Integer>());
-		this.elevatorQueue.put(ELEVATOR4, new ArrayList<Integer>());
-		
-		this.elevatorRequests.put(ELEVATOR1, new ArrayList<Message>());
-		this.elevatorRequests.put(ELEVATOR2, new ArrayList<Message>());
-		this.elevatorRequests.put(ELEVATOR3, new ArrayList<Message>());
-		this.elevatorRequests.put(ELEVATOR4, new ArrayList<Message>());
+		for(int i = 0; i < numElevators; i++) {
+			this.elevatorRequests.put(i, new ArrayList<Message>());
+			this.elevatorQueue.put(i, new ArrayList<Integer>());
+			this.elevatorStates.add(Elevator.ElevatorStates.DOORSCLOSED);
+			this.elevatorFloors.add(0);
+		}
 
 		this.states = SchedulerStates.WAITING;
 		
 		this.views = new ArrayList<>();
 		
-		ElevatorGUI eg = new ElevatorGUI(this);
+		eg = new ElevatorGUI(this);
 	}
 	
 	/**
@@ -218,13 +226,11 @@ public class Scheduler {
 					
 				}
 			}
-			System.out.println(elevatorNum + ": " + this.elevatorRequests.get(elevatorNum));
 			this.elevatorRequests.get(elevatorNum).removeAll(remove);
 		}
 
 		this.states = SchedulerStates.WAITING; // back to WAITING
 		notifyAll();
-		System.out.println(reply);
 		return reply;
 	}
 
@@ -265,6 +271,18 @@ public class Scheduler {
 		if (elevatorState == Elevator.ElevatorStates.TIMEOUT)
 		{
 			System.out.println("Elevator " + elevatorNum + " has timed out before reaching next floor...elevator shutting down");
+			
+			//Takes outstanding requests and puts them in the message queue
+			ArrayList<Message> toRemove = new ArrayList<>();
+			
+			for (Message m : this.elevatorRequests.get(elevatorNum - 1)) {
+				if (this.elevatorQueue.get(elevatorNum - 1).contains(m.startFloor())) {
+					this.messageQueue.add(m);
+					toRemove.add(m);
+				}
+			}
+			elevatorRequests.get(elevatorNum - 1).removeAll(toRemove);
+			
 			this.elevatorQueue.get(elevatorNum-1).clear();
 		}
 		
@@ -372,7 +390,7 @@ public class Scheduler {
 				if ((size > 2) && (elevatorQueue.get(closestElevator).get(size - 2)
 						- elevatorQueue.get(closestElevator).get(size - 1) < 0)) {
 					Collections.reverse(elevatorQueue.get(closestElevator).subList(0, size - 3));
-				} else if ((size > 2) && (elevatorQueue.get(closestElevator).get(0)
+				} else if ((size > 3) && (elevatorQueue.get(closestElevator).get(0)
 						- elevatorQueue.get(closestElevator).get(1) < 0)) {
 					Collections.reverse(elevatorQueue.get(closestElevator).subList(2, size - 1));
 				} else {
@@ -381,12 +399,11 @@ public class Scheduler {
 			}
 			// if elevator is moving up, sort in ascending order 
 			else if (elevatorStates.get(closestElevator) == ElevatorStates.MOVINGUP) {
-				
 				if ((size > 2) && (elevatorQueue.get(closestElevator).get(size - 2)
-						- elevatorQueue.get(closestElevator).get(size - 1) < 0)) {
+						- elevatorQueue.get(closestElevator).get(size - 1) > 0)) {
 					Collections.reverse(elevatorQueue.get(closestElevator).subList(0, size - 3));
-				} else if ((size > 2) && (elevatorQueue.get(closestElevator).get(0)
-						- elevatorQueue.get(closestElevator).get(1) < 0)) {
+				} else if ((size > 3) && (elevatorQueue.get(closestElevator).get(0)
+						- elevatorQueue.get(closestElevator).get(1) > 0)) {
 					Collections.reverse(elevatorQueue.get(closestElevator).subList(2, size - 1));
 				} else {
 					Collections.sort(elevatorQueue.get(closestElevator));
@@ -398,14 +415,15 @@ public class Scheduler {
 	/**
 	 * Helper method to determine whether the program is complete.
 	 * 
-	 * checks if: All the elevators are DOORSCLOSED All the elevator requests have
-	 * been handled The Floor has notified the requests are complete
+	 * checks if: All the elevators are DOORSCLOSED, All the elevator requests have
+	 * been handled or are TIMEOUT, The Floor has notified the requests are complete
 	 * 
 	 * @return boolean : Whether the program is complete or not
 	 */
 	private boolean checkFinished() {
 		boolean elevatorsComplete = true;
 		boolean elevatorStatesClosed = true;
+		boolean elevatorsTimedOut = true;
 
 		for (Elevator.ElevatorStates i : elevatorStates) {
 			if (!(i == Elevator.ElevatorStates.DOORSCLOSED)) {
@@ -413,13 +431,21 @@ public class Scheduler {
 			}
 		}
 
-		for (ArrayList<Integer> i : elevatorQueue.values()) {
-			if (i.size() > 0) {
+		// an active elevator is one that is not timed out and has something to do 
+		// elevatorsComplete if all the elevators are inactive (either timed out or 
+		// have nothing to do
+		for (int i = 0; i < elevatorQueue.size(); i++) {
+			if(elevatorQueue.get(i).size() != 0) {
 				elevatorsComplete = false;
+			}
+			if (elevatorStates.get(i) == ElevatorStates.TIMEOUT ) {
+				elevatorsComplete = true;
+			} else {
+				elevatorsTimedOut = false;
 			}
 		}
 
-		if (this.requestsComplete && elevatorStatesClosed && elevatorsComplete) {
+		if ((this.requestsComplete && elevatorStatesClosed && elevatorsComplete) || elevatorsTimedOut) {
 			return true;
 		}
 		return false;
@@ -473,6 +499,7 @@ public class Scheduler {
 	 */
 	public void setClosed() {
 		this.closed = true;
+		eg.close();
 	}
 
 	/**
@@ -508,7 +535,7 @@ public class Scheduler {
 	 * 
 	 * @return SchedulerStates : current state of the Scheduler
 	 */
-	public SchedulerStates getSchedulerState() {
+	public SchedulerStates getCurrentState() {
 		return this.states;
 	}
 
@@ -537,6 +564,14 @@ public class Scheduler {
 	 */
 	public HashMap<Integer, ArrayList<Integer>> getElevatorQueue() {
 		return this.elevatorQueue;
+	}
+	
+	/**
+	 * Getter Method for Elevator Requests Map 
+	 * @return elevatorRrequests : HashMap<Integer, ArrayList<Message>>
+	 */
+	public HashMap<Integer, ArrayList<Message>> getElevatorRequests() {
+		return elevatorRequests;
 	}
 
 	public static void main(String[] args) {

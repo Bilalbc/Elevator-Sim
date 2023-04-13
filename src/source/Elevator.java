@@ -27,12 +27,10 @@ public class Elevator implements Runnable {
 	private int handlerPort;
 	private int errorCode;
 	private DatagramSocket sendAndReceive;
-
-	private boolean[] lightsGrid;
-
-	private static final int NUM_FLOORS = 10;
+	private boolean running; 
+	
 	private static final int TIME_TO_MOVE = 4083;
-	private static final int TIME_DOORS = 1000;
+	private static final int TIME_DOORS = 3712;
 	private static final int MAX_DATA_SIZE = 250;	
 	
 	public static enum ElevatorStates {
@@ -45,10 +43,13 @@ public class Elevator implements Runnable {
 	 * 
 	 * @param sch, Scheduler being used
 	 */
-	public Elevator(int portNum, int assignedNum) {
+	public Elevator(int portNum, int assignedNum, boolean timeoutEnabled) {
+		
 		try {
 			this.sendAndReceive = new DatagramSocket();
-			sendAndReceive.setSoTimeout(10000);
+			if(timeoutEnabled) {
+				sendAndReceive.setSoTimeout(15000);
+			}			
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
@@ -57,10 +58,18 @@ public class Elevator implements Runnable {
 		this.assignedNum = assignedNum;
 		this.currentState = ElevatorStates.DOORSCLOSED; // Elevator starts at a closed state
 		this.handlerPort = portNum;
-		this.lightsGrid = new boolean[NUM_FLOORS];
 		this.errorCode = 0;
 	}
 
+
+
+	/**
+	 * Send and gets messages through UDP
+	 * 
+	 * @param pse, PassStateObjec to be sent to the elevator handler containing 
+	 * 				elevator information 
+	 * @param send, if this is a send or receive operation 
+	 */
 	private void sendAndGetMessage(PassStateEvent pse, boolean send) {
 		DatagramPacket sending; // both packets
 		DatagramPacket receiving;
@@ -108,6 +117,8 @@ public class Elevator implements Runnable {
 						errorCode = 1;
 					}
 					this.destination = data % 100; // 10s and 1s digit contain destination floor
+				} else {
+					this.destination = 0;
 				}
 			}
 
@@ -130,29 +141,23 @@ public class Elevator implements Runnable {
 		Thread tThread = new Thread(new TimeoutTimer(this), "Timer");
 		tThread.start();
 
-		while (!Thread.currentThread().isInterrupted()) {
+		while (true) {
 			try {
 				checkDoorsStuck();
-				// Lets the scheduler know which floor it is on and its state
-				sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), true);
-
-				// If the elevator has reached its destination or does not have one(0)
-				sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), false);
-
+				
+				if(currentState == ElevatorStates.TIMEOUT) {
+					sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum, true), true);
+					sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), false);
+				}
 				// If timeout occurs, break out and end the thread.
-				if (currentState == ElevatorStates.TIMEOUT) {
+				else{
+					// Lets the scheduler know which floor it is on and its state
 					sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), true);
-					Thread.sleep(100000);
-					/**
-					 *	removed the interrupt here, but may need to put it back or find another way to properly exit the while loop (break maybe)
-					 * 
-					 * 
-					 * 
-					 * 
-					 */
+					// If the elevator has reached its destination or does not have one(0)
+					sendAndGetMessage(new PassStateEvent(currentFloor, currentState, assignedNum), false);
+					Thread.sleep(100);		
 				}
 
-				Thread.sleep(100);
 				if (destination == currentFloor && currentState != ElevatorStates.DOORSCLOSED) {
 					currentState = ElevatorStates.STOPPED;
 					Thread.sleep(TIME_DOORS);
@@ -162,7 +167,6 @@ public class Elevator implements Runnable {
 					System.out.println(
 							"Elevator " + assignedNum + ": Letting People in and out on floor " + currentFloor + "!");
 					
-					lightsGrid[currentFloor-1] = false;
 					Thread.sleep(TIME_DOORS);
 					this.currentState = ElevatorStates.DOORSCLOSED; // Set to doors closed
 				}
@@ -172,12 +176,11 @@ public class Elevator implements Runnable {
 				if (destination != 0 && errorCode == 0) {
 					if (destination > currentFloor) { // check if the elevator needs to move up or down
 						currentState = ElevatorStates.MOVINGUP;
+						Thread.sleep(TIME_TO_MOVE);
 					} else if (destination < currentFloor) {
 						currentState = ElevatorStates.MOVINGDOWN;
-					} else {
-						System.out.println("Elevator" + assignedNum + " is already on destination floor");
+						Thread.sleep(TIME_TO_MOVE);
 					}
-					Thread.sleep(TIME_TO_MOVE);
 					
 					if (currentState.equals(ElevatorStates.MOVINGUP)) {
 						currentFloor++;
@@ -186,14 +189,13 @@ public class Elevator implements Runnable {
 						currentFloor--;
 					}
 				} else if(errorCode == 1) {
-					currentState = ElevatorStates.STUCKCLOSED;
+					currentState = ElevatorStates.STUCKOPEN;
+					errorCode = 0;
 				} else if(errorCode == 2) { 
 					// delay so the TimeoutTimer can interrupt the elevator thread
-					Thread.sleep(TIME_TO_MOVE + 1000);
+					Thread.sleep(TIME_TO_MOVE + 5000);
 				}
 				tThread.interrupt();
-				System.out.println(
-						"Elevator " + assignedNum + " is on floor " + currentFloor + ". Destination is " + destination);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -260,18 +262,33 @@ public class Elevator implements Runnable {
 	public void setState(Elevator.ElevatorStates state) {
 		this.currentState = state;
 	}
+	
+	/**
+	 * Getter method used to retrieve destination floor for testing
+	 * @return destinationFloor : int
+	 */
+	public int getDestinationFloor() {
+		return this.destination;
+	}
+	
+	/**
+	 * Method used to close sockets for testing purposes
+	 */
+	public void closeSockets() {
+		sendAndReceive.close();
+	}
+
 
 	public static void main(String[] args) {
 
-		Thread e1 = new Thread(new Elevator(69, 1), "0");
-		Thread e2 = new Thread(new Elevator(70, 2), "1");
-		Thread e3 = new Thread(new Elevator(71, 3), "2");
-		Thread e4 = new Thread(new Elevator(72, 4), "3");
+		Thread e1 = new Thread(new Elevator(69, 1, Scheduler.TIMEOUT_ENABLED), "0");
+		Thread e2 = new Thread(new Elevator(70, 2, Scheduler.TIMEOUT_ENABLED), "1");
+		Thread e3 = new Thread(new Elevator(71, 3, Scheduler.TIMEOUT_ENABLED), "2");
+		Thread e4 = new Thread(new Elevator(72, 4, Scheduler.TIMEOUT_ENABLED), "3");
 
 		e1.start();
 		e2.start();
 		e3.start();
 		e4.start();
 	}
-
 }

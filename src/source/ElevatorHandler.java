@@ -16,6 +16,7 @@ import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 
 public class ElevatorHandler implements Runnable {
 
@@ -23,24 +24,39 @@ public class ElevatorHandler implements Runnable {
 	private DatagramSocket socket;
 	private DatagramPacket sendPacket, receivePacket;
 	private boolean send;
+	private boolean error;
 
 	public static final int MAX_DATA_SIZE = 250;
-	public static final int TIMEOUT = 40000; 
+	public static final int TIMEOUT = 40000;
 
 	/**
 	 * ElevatorHandler constructor that that takes in the scheduler and initializes
 	 * the socket. Also sets the send condition to true initially.
 	 * 
-	 * @param scheduler,    Scheduler to interact with
-	 * @param elevatorPort, of type int, the port to initialize the socket to.
+	 * @param scheduler, Scheduler to interact with
+	 * @param elevatorPort,the port to initialize the socket to.
 	 */
 	public ElevatorHandler(Scheduler scheduler, int elevatorPort) {
+		this(scheduler, elevatorPort, Scheduler.TIMEOUT_ENABLED);
+	}
+
+	/**
+	 * Overloaded constructor for ElevatorHandler, which allows the specification of
+	 * timeouts, used for testing
+	 * 
+	 * @param scheduler, Scheduler to interact with
+	 * @param elevatorPort,the port to initialize the socket to.
+	 * @param timeoutEnabled, if socket timeouts are enabled
+	 */
+	public ElevatorHandler(Scheduler scheduler, int elevatorPort, boolean timeoutEnabled) {
 		this.scheduler = scheduler;
 		this.send = true;
-
+		this.error = false;
 		try {
 			socket = new DatagramSocket(elevatorPort);
-			socket.setSoTimeout(TIMEOUT);
+			if (timeoutEnabled) {
+				socket.setSoTimeout(TIMEOUT);
+			}
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);
@@ -52,9 +68,10 @@ public class ElevatorHandler implements Runnable {
 	 */
 	@Override
 	public void run() {
-		while (true) {
-			sendAndReceieve();
+		while(true) {
+			sendAndReceieve();			
 		}
+		
 	}
 
 	/**
@@ -81,7 +98,17 @@ public class ElevatorHandler implements Runnable {
 
 		PassStateEvent pse = (PassStateEvent) o;
 
-		scheduler.passState(pse);
+		// if the elevator is in an error state, dont send
+		// this setup allows for a message to scheduler to be sent when an 
+		// elevator first encounters an error, so the sch can update the state, 
+		// but not for subsequent messages
+		if(!error){
+			scheduler.passState(pse);			
+		}
+		
+		if(pse.isError()) {
+			this.error = true;	
+		} 
 	}
 
 	/**
@@ -106,14 +133,20 @@ public class ElevatorHandler implements Runnable {
 				replyData = new byte[1];
 				replyData[0] = (byte) 1;
 
-				passStateHandler(data);
+				if(!error) {
+					passStateHandler(data);					
+				}
 
 				this.send = false;
 			} else {
 				// If send is false, then the reply is the actual reply from the scheduler, thus
 				// serialize reply.
 				replyData = new byte[1];
-				replyData[0] = (byte) scheduler.readMessage();
+				if(error) {
+					replyData[0] = (byte) 0;
+				} else {
+					replyData[0] = (byte) scheduler.readMessage();					
+				}
 
 				this.send = true;
 			}
@@ -123,10 +156,15 @@ public class ElevatorHandler implements Runnable {
 					receivePacket.getPort());
 			socket.send(sendPacket);
 		} catch (IOException e) {
-			System.out.print("IO Exception: likely:");
-			System.out.println("Receive Socket Timed Out.\n" + e);
 			e.printStackTrace();
-			System.exit(1);
+			System.exit(0);
 		}
+	}
+
+	/**
+	 * Method used to close sockets for testing purposes
+	 */
+	public void closeSockets() {
+		socket.close();
 	}
 }

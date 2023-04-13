@@ -36,29 +36,54 @@ public class Floor implements Runnable {
 	
 	// shared data. not synchronized since minimum delay between requests will ensure it is not accessed twice in the same momoent 
 	private ArrayList<Message> requestQueue;
-	
 	private boolean requestsComplete;
+	private Message latestReturned; // for testing
 
-	private Scanner reader;
-
+	private Scanner scanner;
+	private int requestsHandled; // Value for tracking requests read for testing
+	private boolean scannerActive;
+	private int handlerPort;
+	// values used to determine the delay between requests
+	private int minWaitTime; 
+	private int maxWaitTime;
+	
+	
+	/**
+	 * Utility constructor to allow access of methods in testing
+	 */
+	public Floor() {
+		// Do nothing 
+	}
+	
 	/**
 	 * Constructor for Floor class
 	 * 
 	 * @param sch, Scheduler being used
 	 */
-	public Floor(File file) {
+	public Floor(File file, int port, boolean timeoutEnabled) {
 		this.floorRequests = file;
 		this.requestQueue = new ArrayList<Message>();
 		this.requestsComplete = false;
+		this.requestsHandled = 0;
+		this.handlerPort = port;
+		
 		try {
 			this.sendAndReceive = new DatagramSocket();
-			sendAndReceive.setSoTimeout(10000);
+			if(timeoutEnabled) {
+				sendAndReceive.setSoTimeout(15000);
+				minWaitTime = 2;
+				maxWaitTime = 10;
+			} else {
+				minWaitTime = 1;
+				maxWaitTime = 0;
+			}
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
 
 		updateTimes();
 	}
+
 
 	/**
 	 * Helper method to randomly recalculate the time values for incoming requests.
@@ -80,7 +105,7 @@ public class Floor implements Runnable {
 			Calendar cal = Calendar.getInstance();
 			cal.setTimeInMillis(System.currentTimeMillis());
 			for (String[] row : rows) {
-				int rand = (int) (Math.random() * 10) + 3;
+				int rand = (int) (Math.random() * maxWaitTime) + minWaitTime;
 				cal.add(Calendar.SECOND, rand);
 				row[0] = cal.get(Calendar.HOUR_OF_DAY) + ":" + cal.get(Calendar.MINUTE) + ":"
 						+ cal.get(Calendar.SECOND);
@@ -118,7 +143,7 @@ public class Floor implements Runnable {
 	 * @return req, Request information, from file null if data was in incorrect
 	 *         format
 	 */
-	private Message createRequest(Scanner reader) {
+	public Message createRequest(Scanner reader) {
 		String data = reader.nextLine();
 		String[] values = data.split(", ");
 		Message req = null;
@@ -129,7 +154,6 @@ public class Floor implements Runnable {
 			setDelay(values[0]);
 		}
 		return req;
-
 	}
 
 	/**
@@ -208,7 +232,7 @@ public class Floor implements Runnable {
 
 				byte sendingData[] = byteStream.toByteArray();
 				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(),
-						FloorHandler.FLOOR_HANDLER_PORT); // Send to floor handler
+						handlerPort); // Send to floor handler
 
 				sendAndReceive.send(sending);
 
@@ -221,7 +245,7 @@ public class Floor implements Runnable {
 			} else {
 				byte sendingData[] = new byte[1];
 				sending = new DatagramPacket(sendingData, sendingData.length, InetAddress.getLocalHost(),
-						FloorHandler.FLOOR_HANDLER_PORT); // send void message to notify that I want a message
+						handlerPort); // send void message to notify that I want a message
 				sendAndReceive.send(sending);
 
 				byte receivingData[] = new byte[FloorHandler.MAX_DATA_SIZE];
@@ -234,14 +258,15 @@ public class Floor implements Runnable {
 				ObjectInputStream objectStream = new ObjectInputStream(byteStream);
 
 				sendingMessage = (Message) objectStream.readObject();
-				System.out.println(sendingMessage.getReturnMessage());
+				latestReturned = sendingMessage;
+				Thread.sleep(100);
 
 				byteStream.close();
 				objectStream.close();
 			}
 
-		} catch (IOException | ClassNotFoundException e) {
-			reader.close();
+		} catch (IOException | ClassNotFoundException | InterruptedException e) {
+			e.printStackTrace();
 			System.exit(1);
 		}
 	}
@@ -258,16 +283,23 @@ public class Floor implements Runnable {
 			@Override
 			public void run() {
 				try {
-					reader = new Scanner(floorRequests);
-					while (true) {
-						if (reader.hasNextLine()) {
-							Message req = createRequest(reader);
-							// sleep until the specified time is reached
-							Thread.sleep(messageDelay); 
-							messageDelay = 0; // reset delay 
-							requestQueue.add(req); // add to shared data 
+					scanner = new Scanner(floorRequests);
+					scannerActive = true;
+					while (scannerActive) {
+						if (scanner.hasNextLine()) {
+							requestsHandled ++;
+							Message req = createRequest(scanner);
+							if(req != null) {
+								// sleep until the specified time is reached
+								Thread.sleep(messageDelay); 
+								messageDelay = 0; // reset delay 
+								requestQueue.add(req); // add to shared data 		
+							}
 						} else {
 							requestsComplete = true; // no more requests
+							scanner.close();
+							scannerActive = false;
+							break;
 						}
 					}
 				} catch (FileNotFoundException | InterruptedException e) {
@@ -282,7 +314,10 @@ public class Floor implements Runnable {
 			// if there are no requests, send empty message to handler
 			if (requestQueue.isEmpty()) {
 				sendAndGetMessage(null, true);
-				System.out.println(messageDelay);
+			} else if (requestsComplete && requestQueue.isEmpty() ) {
+				// notify scheduler that there are no more requests to be sent
+				Message done = new Message("done");
+				sendAndGetMessage(done, true);
 			} else {
 				Calendar calendar = Calendar.getInstance();
 				// pop request
@@ -290,19 +325,54 @@ public class Floor implements Runnable {
 				System.out.println("Passing message: " + req + " at " + calendar.getTime());
 				sendAndGetMessage(req, true);
 			}
-			if (requestsComplete) {
-				// notify scheduler that there are no more requests to be sent
-				Message done = new Message("done");
-				sendAndGetMessage(done, true);
-			}
+			
 			Message returned = new Message("");
 			sendAndGetMessage(returned, false);
 		}
 	}
+	
+	/**
+	 * Method used to close sockets for testing purposes
+	 */
+	public void closeSockets() {
+		sendAndReceive.close();
+	}
+	
+	/**
+	 * Method used to manually close the socket, for testing 
+	 */
+	public void closeScanner() {
+		scanner.close();
+		scannerActive = false;
+	}
+	
+	/**
+	 * Getter method for the last return message recieved from floorHandler, used for testing 
+	 * @return Message : last returned Message
+	 */
+	public Message getLatestReturned() {
+		return latestReturned;
+	}
+	
+	/**
+	 * Getter method for how many requests have been handled, used for testing 
+	 * @return int : number of requests handled
+	 */
+	public int getRequestsHandled() {
+		return requestsHandled;
+	}
 
+	/**
+	 * Getter method for scanner, used for testing
+	 * @return Scanner : scanner object
+	 */
+	public Scanner getScanner() {
+		return this.scanner;
+	}
+	
 	public static void main(String[] args) {
 		File file = new File("src//source//Requests.csv");
-		Thread f = new Thread(new Floor(file), "Floor");
+		Thread f = new Thread(new Floor(file, FloorHandler.FLOOR_HANDLER_PORT, Scheduler.TIMEOUT_ENABLED), "Floor");
 		f.start();
 	}
 }

@@ -36,12 +36,26 @@ public class FloorHandler implements Runnable {
 	 * @param scheduler, Scheduler to interact with
 	 */
 	public FloorHandler(Scheduler scheduler) {
+		this(scheduler, FLOOR_HANDLER_PORT, Scheduler.TIMEOUT_ENABLED);
+	}
+	
+	/**
+	 * Overloaded constructor to allow specification of port number and managing timeouts for testing
+	 * 
+	 * @param scheduler, Scheduler to interact with
+	 * @param port, port for socket
+	 * @param timeoutEnabled, if socket timeouts are enabled
+	 * 
+	 */
+	public FloorHandler(Scheduler scheduler, int port, boolean timeoutEnabled) {
 		this.scheduler = scheduler;
 		this.send = true;
-
+		
 		try {
-			socket = new DatagramSocket(FLOOR_HANDLER_PORT);
-			socket.setSoTimeout(TIMEOUT);
+			socket = new DatagramSocket(port);
+			if(timeoutEnabled) {
+				socket.setSoTimeout(TIMEOUT);
+			}		
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);
@@ -153,10 +167,15 @@ public class FloorHandler implements Runnable {
 
 			socket.send(sendPacket);
 		} catch (IOException e) {
-			System.out.print("IO Exception: likely:");
-			System.out.println("Receive Socket Timed Out.\n" + e);
 			e.printStackTrace();
 			System.exit(1);
 		}
+	}
+	
+	/**
+	 * Method used to close sockets for testing purposes
+	 */
+	public void closeSockets() {
+		socket.close();
 	}
 }
