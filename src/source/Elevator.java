@@ -62,6 +62,14 @@ public class Elevator implements Runnable {
 	}
 
 
+
+	/**
+	 * Send and gets messages through UDP
+	 * 
+	 * @param pse, PassStateObjec to be sent to the elevator handler containing 
+	 * 				elevator information 
+	 * @param send, if this is a send or receive operation 
+	 */
 	private void sendAndGetMessage(PassStateEvent pse, boolean send) {
 		DatagramPacket sending; // both packets
 		DatagramPacket receiving;
