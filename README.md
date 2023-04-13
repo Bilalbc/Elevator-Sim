@@ -1,4 +1,4 @@
-# SYSC 3303 Elevator Simulation Group Project Iteration 4
+# SYSC 3303 Elevator Simulation Group Project Iteration 5
 
 ## Code Overview
 
@@ -21,6 +21,10 @@ The elevator has states for when the doors have opened or closed, when the eleva
 
 **Main.java ->** Includes the main method used to start the simulation.
 
+**ElevatorGUI.java ->** The GUI for the elevator system programmed using JSwing library. 
+
+**ElevatorView.java ->** The view interface to update any views for the elevator subsystem
+
 #### Sequence Diagram:
 
 Only one Elevator/ElevatorHandler thread shown in the sequence digram. This was done to demonstrate the system's modifiability. The system can sustain 1 to X number of
@@ -35,7 +39,7 @@ Elevator/ElevatorHandler threads.
 **testData.csv ->** Data used for testing the functionality of the Floor, Scheduler, and Elevator.
 
 ## How to run
-To run the code, make sure that all files are present and are in the right spots. The code overview above tells you which classes should be where. (Requests.csv) should be in the source package. Run Scheduler.java, Elevator.java and Scheduler.java - in that order. 
+To run the code, make sure that all files are present and are in the right spots. The code overview above tells you which classes should be where. (Requests.csv) should be in the source package. Run Scheduler.java, Elevator.java and Floor.java - in that order. 
 
 ## Contributions
 Everyone contributed to the design and planning of the program.
@@ -48,3 +52,5 @@ Everyone contributed to the design and planning of the program.
 **Scheduler.java:** Mohamed Kaddour, Akshay Vashisht, Matthew Parker
 **Floor.java:** Kousha Motazedian, Matthew Parker
 **Elevator.java:** Kousha Motazedian, Matthew Parker, Akshay Vashisht
+**ElevatorGUI.java:** Mohamed Kaddour
+**ElevatorView.java:** Mohamed Kaddour
